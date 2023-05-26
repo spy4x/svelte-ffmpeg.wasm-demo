@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AuthUser {
+  id           String        @id @unique @db.VarChar(15)
+  auth_session AuthSession[]
+  auth_key     AuthKey[]
+  // here you can add custom fields for your user
+  // e.g. name, email, username, roles, etc.
+  email        String        @unique @db.VarChar(50)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model AuthSession {
+  id             String   @id @unique
+  user_id        String   @db.VarChar(15)
+  active_expires BigInt
+  idle_expires   BigInt
+  auth_user      AuthUser @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([user_id])
+  @@map("user_auth_sessions")
+}
+
+model AuthKey {
+  id              String   @id @unique
+  hashed_password String?  @db.VarChar(150)
+  user_id         String   @db.VarChar(15)
+  primary_key     Boolean
+  expires         BigInt?
+  auth_user       AuthUser @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([user_id])
+  @@map("user_auth_keys")
+}

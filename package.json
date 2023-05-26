@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "pnpm prisma generate && vite build",
 		"preview": "vite preview",
 		"test": "playwright test",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -16,7 +16,12 @@
 	},
 	"dependencies": {
 		"@ffmpeg/core": "^0.11.0",
-		"@ffmpeg/ffmpeg": "^0.11.6"
+		"@ffmpeg/ffmpeg": "^0.11.6",
+		"@lucia-auth/adapter-prisma": "^2.0.0",
+		"@prisma/client": "^4.14.1",
+		"lucia-auth": "^1.7.0",
+		"prisma-error-enum": "^0.1.3",
+		"zod": "^3.21.4"
 	},
 	"devDependencies": {
 		"@floating-ui/dom": "^1.2.8",
@@ -35,6 +40,7 @@
 		"postcss": "^8.4.23",
 		"prettier": "^2.8.0",
 		"prettier-plugin-svelte": "^2.8.1",
+		"prisma": "^4.14.1",
 		"svelte": "^3.54.0",
 		"svelte-check": "^3.0.1",
 		"tailwindcss": "^3.3.2",

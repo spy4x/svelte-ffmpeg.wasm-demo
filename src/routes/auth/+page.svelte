@@ -1,61 +1,90 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { auth } from '@stores';
+	import { AuthStatus, auth } from '@stores';
+	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
+	import Loading from '../loading.svelte';
 
-	let isLoading = false;
+	let email = '';
+	let password = '';
 
 	async function signIn() {
-		isLoading = true;
-		await new Promise((r) => setTimeout(r, 2000)); // Simulate a slow network
-		auth.signIn();
-		goto('/proof-of-concept');
-		isLoading = false;
+		const state = await auth.signIn(email, password);
+		if (state.user) {
+			goto('/proof-of-concept');
+		}
 	}
+
+	async function signUp() {
+		const state = await auth.signUp(email, password);
+		if (state.user) {
+			goto('/proof-of-concept');
+		}
+	}
+
+	onMount(() => {
+		const state = get(auth);
+		if (state.user) {
+			goto('/proof-of-concept');
+		}
+	});
 </script>
 
-<form
-	data-e2e="sign-in-providers-form"
-	class="max-w-sm mx-auto bg-surface-700 p-6 rounded-lg"
-	on:submit={signIn}
->
+<form data-e2e="sign-in-providers-form" class="max-w-sm mx-auto bg-surface-700 p-6 rounded-lg">
 	<div data-e2e="email-and-password" class="flex flex-col gap-5">
 		<label>
 			<span>Email</span>
-			<input class="input" type="email" placeholder="Enter email" />
+			<input bind:value={email} class="input" type="email" placeholder="Enter email" />
+			{#if $auth.error?.email}
+				<div class="text-red-500">{$auth.error.email._errors}</div>
+			{/if}
 		</label>
 		<label>
 			<span>Password</span>
-			<input class="input" type="password" placeholder="Enter password" />
+			<input bind:value={password} class="input" type="password" placeholder="Enter password" />
+			{#if $auth.error?.password}
+				<div class="text-red-500">{$auth.error.password._errors}</div>
+			{/if}
 		</label>
 
-		<button class="btn variant-filled-primary">
-			{#if isLoading}
-				<svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-					<circle
-						class="opacity-25"
-						cx="12"
-						cy="12"
-						r="10"
-						stroke="currentColor"
-						stroke-width="4"
-					/>
-					<path
-						class="opacity-75"
-						fill="currentColor"
-						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-					/>
-				</svg>
+		{#if $auth.status === AuthStatus.IN_PROGRESS}
+			<button type="button" class="btn variant-ghost-surface">
+				<Loading />
 				<span>Loading...</span>
-			{:else}
-				Sign in
+			</button>
+		{:else}
+			<div class="flex gap-3">
+				<button on:click={signIn} type="button" class="btn variant-filled-primary grow">
+					Sign in
+				</button>
+				<button on:click={signUp} type="button" class="btn variant-filled-secondary grow">
+					Sign up
+				</button>
+			</div>
+			{#if $auth.status === AuthStatus.ERROR}
+				<p class="text-center variant-ghost-error p-4">
+					{$auth.error?.message || 'Operation failed'}
+				</p>
 			{/if}
-		</button>
+		{/if}
 	</div>
 
 	<p class="my-4 text-center text-surface-400">Or sign in with</p>
 
 	<div class="flex items-center justify-around">
-		<button class="btn bg-gradient-to-br variant-gradient-warning-error"> Google </button>
-		<button class="btn bg-gradient-to-br variant-gradient-tertiary-primary"> Facebook </button>
+		<button
+			on:click={auth.signInWithGoogle}
+			type="button"
+			class="btn bg-gradient-to-br variant-gradient-warning-error"
+		>
+			Google
+		</button>
+		<button
+			on:click={auth.signInWithFacebook}
+			type="button"
+			class="btn bg-gradient-to-br variant-gradient-tertiary-primary"
+		>
+			Facebook
+		</button>
 	</div>
 </form>
