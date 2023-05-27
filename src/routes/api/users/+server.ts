@@ -1,5 +1,5 @@
 import { auth } from '$lib/server/lucia';
-import { json, type RequestEvent, type RequestHandler } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 import { z } from 'zod';
 
 const POST_PAYLOAD = z.object({

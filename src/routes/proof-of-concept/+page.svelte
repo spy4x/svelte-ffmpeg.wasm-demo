@@ -91,7 +91,9 @@
 	{/if}
 
 	{#if finalVideoStatus === VideoStatus.FINISHED && finalVideo}
-		<video controls src={finalVideo.url} autoplay class="rounded border" />
+		<video controls src={finalVideo.url} autoplay class="rounded border">
+			<track kind="captions" />
+		</video>
 		<a
 			download={'final.' + finalVideo.format}
 			href={finalVideo.url}

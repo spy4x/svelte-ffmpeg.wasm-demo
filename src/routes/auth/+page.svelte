@@ -2,9 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { AuthStatus, auth } from '@stores';
 	import { onMount } from 'svelte';
-	import { get } from 'svelte/store';
 	import Loading from '../loading.svelte';
-	import { set } from 'zod';
 
 	let email = '';
 	let password = '';

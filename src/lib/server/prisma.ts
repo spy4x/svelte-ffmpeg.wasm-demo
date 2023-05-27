@@ -1,3 +1,4 @@
+import { building } from '$app/environment';
 import { Prisma, PrismaClient } from '@prisma/client';
 
 // import { PrismaError } from 'prisma-error-enum';
@@ -14,7 +15,9 @@ export class PrismaService extends PrismaClient {
 		});
 		this.initLogging();
 		// this.trackConnectionIssues();
-		this.$connect();
+		if (!building) {
+			this.$connect();
+		}
 	}
 
 	// async onModuleInit(): Promise<void> {
@@ -39,7 +42,8 @@ export class PrismaService extends PrismaClient {
 		this.$on('query', (e: Prisma.QueryEvent) => {
 			console.log(`Query. Duration: ${e.duration}ms`, {
 				query: e.query,
-				params: e.params
+				params: e.params,
+				target: e.target
 			});
 		});
 	}

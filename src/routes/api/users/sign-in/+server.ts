@@ -1,5 +1,5 @@
 import { auth, setSession } from '$lib/server/lucia';
-import { json, type RequestEvent, type RequestHandler } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 import { LuciaError } from 'lucia-auth';
 import { z } from 'zod';
 
