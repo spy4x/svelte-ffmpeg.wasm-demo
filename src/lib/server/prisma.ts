@@ -42,8 +42,7 @@ export class PrismaService extends PrismaClient {
 		this.$on('query', (e: Prisma.QueryEvent) => {
 			console.log(`Query. Duration: ${e.duration}ms`, {
 				query: e.query,
-				params: e.params,
-				target: e.target
+				params: e.params
 			});
 		});
 	}
