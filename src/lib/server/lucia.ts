@@ -1,11 +1,17 @@
 import lucia, { type AuthRequest, type Session } from 'lucia-auth';
 import { sveltekit } from 'lucia-auth/middleware';
 import prismaAdapter from '@lucia-auth/adapter-prisma';
-import { google } from '@lucia-auth/oauth/providers';
+import { facebook, google } from '@lucia-auth/oauth/providers';
 import { prisma } from './prisma';
 import type { AuthUser } from '@prisma/client';
 import { dev } from '$app/environment';
-import { APP_URL, AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET } from '$env/static/private';
+import {
+	APP_URL,
+	AUTH_FACEBOOK_APP_ID,
+	AUTH_FACEBOOK_APP_SECRET,
+	AUTH_GOOGLE_CLIENT_ID,
+	AUTH_GOOGLE_CLIENT_SECRET
+} from '$env/static/private';
 import type { Cookies } from '@sveltejs/kit';
 import { USER_ID_COOKIE_NAME } from '$lib/shared/constants';
 
@@ -70,10 +76,12 @@ export const googleAuth = google(auth, {
 	redirectUri: APP_URL + '/api/users/google/callback',
 	scope: ['email', 'profile']
 });
-console.log({
-	redirectUri: APP_URL + '/api/users/google/callback',
-	clientId: AUTH_GOOGLE_CLIENT_ID,
-	clientSecret: AUTH_GOOGLE_CLIENT_SECRET
+
+export const facebookAuth = facebook(auth, {
+	clientId: AUTH_FACEBOOK_APP_ID,
+	clientSecret: AUTH_FACEBOOK_APP_SECRET,
+	redirectUri: APP_URL + '/api/users/facebook/callback',
+	scope: ['email', 'public_profile']
 });
 
 export type Auth = typeof auth;

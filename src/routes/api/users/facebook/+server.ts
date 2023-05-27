@@ -1,7 +1,6 @@
-import { APP_URL, AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET } from '$env/static/private';
-import { googleAuth } from '$lib/server/lucia';
+import { facebookAuth } from '$lib/server/lucia';
 import { redirect, type RequestHandler } from '@sveltejs/kit';
-import { GOOGLE_AUTH_COOKIE_NAME } from './types';
+import { FACEBOOK_AUTH_COOKIE_NAME } from './types';
 
 export const GET: RequestHandler = async ({ cookies, locals }) => {
 	// if already authenticated, redirect to home
@@ -10,10 +9,11 @@ export const GET: RequestHandler = async ({ cookies, locals }) => {
 	}
 
 	// get url to redirect the user to, with the state
-	const [url, state] = await googleAuth.getAuthorizationUrl();
+	const [url, state] = await facebookAuth.getAuthorizationUrl();
+	console.log({ url, state });
 
 	// the state can be stored in cookies for request validation on callback
-	cookies.set(GOOGLE_AUTH_COOKIE_NAME, state, {
+	cookies.set(FACEBOOK_AUTH_COOKIE_NAME, state, {
 		path: '/',
 		maxAge: 60 * 60
 	});
