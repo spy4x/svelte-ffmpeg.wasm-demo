@@ -1,7 +1,9 @@
-import { localStorageStore, toastStore } from '@skeletonlabs/skeleton';
+import { localStorageStore } from '@skeletonlabs/skeleton';
 import type { AuthUser } from '@prisma/client';
 import { get } from 'svelte/store';
 import { request } from './helpers';
+import { USER_ID_COOKIE_NAME } from '$lib/shared/constants';
+import { browser } from '$app/environment';
 
 export enum AuthStatus {
 	IDLE = 'IDLE',
@@ -29,10 +31,18 @@ function mutateStore(state: Partial<State>) {
 	store.update((s) => ({ ...s, ...state }));
 }
 
-mutateStore({ status: AuthStatus.IDLE, error: undefined }); // force initial value
-
 export const auth = {
 	subscribe: store.subscribe,
+	fetchMe: async (): Promise<State> => {
+		mutateStore({ status: AuthStatus.IN_PROGRESS, error: undefined });
+		const [error, user] = await request<AuthUser>('/api/users/me');
+		if (error) {
+			mutateStore({ status: AuthStatus.ERROR, error });
+		} else {
+			mutateStore({ user, status: AuthStatus.SUCCESS });
+		}
+		return get(store);
+	},
 	signIn: async (email: string, password: string): Promise<State> => {
 		mutateStore({ status: AuthStatus.IN_PROGRESS, error: undefined });
 		const [error, user] = await request<AuthUser>('/api/users/sign-in', 'POST', {
@@ -56,12 +66,8 @@ export const auth = {
 		}
 		return get(store);
 	},
-	signInWithGoogle: (): void => {
-		toastStore.trigger({ message: 'Not implemented yet' });
-	},
-	signInWithFacebook: (): void => {
-		toastStore.trigger({ message: 'Not implemented yet' });
-	},
+	signInWithGoogleURL: '/api/users/google',
+	signInWithFacebookURL: '/api/users/facebook',
 	signOut: async () => {
 		mutateStore({ status: AuthStatus.IN_PROGRESS, error: undefined });
 		const [error] = await request<void>('/api/users/sign-out', 'POST');
@@ -72,3 +78,17 @@ export const auth = {
 		}
 	}
 };
+
+function init() {
+	mutateStore({ status: AuthStatus.IDLE, error: undefined }); // force initial value
+
+	// if cookie with user.id exists - fetch user
+	if (!browser) {
+		return;
+	}
+	if (document.cookie.includes(USER_ID_COOKIE_NAME)) {
+		auth.fetchMe();
+	}
+}
+
+init();

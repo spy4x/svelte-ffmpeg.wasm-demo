@@ -33,7 +33,7 @@
 					</a>
 					<button class="btn btn-sm variant-ghost-secondary" on:click={signOut}>
 						{#if $auth.status === AuthStatus.IN_PROGRESS}
-							<Loading /> Signing out...
+							<Loading /> Processing...
 						{:else}
 							{$auth.user.email}, Sign out
 						{/if}

@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import Loading from '../loading.svelte';
+	import { set } from 'zod';
 
 	let email = '';
 	let password = '';
@@ -23,10 +24,13 @@
 	}
 
 	onMount(() => {
-		const state = get(auth);
-		if (state.user) {
-			goto('/proof-of-concept');
-		}
+		// subscribe to state and redirect on success as well as remove the subscription
+		const unsubscribe = auth.subscribe((state) => {
+			if (state.user) {
+				goto('/proof-of-concept');
+				setTimeout(() => unsubscribe());
+			}
+		});
 	});
 </script>
 
@@ -72,19 +76,14 @@
 	<p class="my-4 text-center text-surface-400">Or sign in with</p>
 
 	<div class="flex items-center justify-around">
-		<button
-			on:click={auth.signInWithGoogle}
-			type="button"
-			class="btn bg-gradient-to-br variant-gradient-warning-error"
-		>
+		<a href={auth.signInWithGoogleURL} class="btn bg-gradient-to-br variant-gradient-warning-error">
 			Google
-		</button>
-		<button
-			on:click={auth.signInWithFacebook}
-			type="button"
+		</a>
+		<a
+			href={auth.signInWithFacebookURL}
 			class="btn bg-gradient-to-br variant-gradient-tertiary-primary"
 		>
 			Facebook
-		</button>
+		</a>
 	</div>
 </form>

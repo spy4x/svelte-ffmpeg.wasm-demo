@@ -18,6 +18,7 @@
 		"@ffmpeg/core": "^0.11.0",
 		"@ffmpeg/ffmpeg": "^0.11.6",
 		"@lucia-auth/adapter-prisma": "^2.0.0",
+		"@lucia-auth/oauth": "^1.1.0",
 		"@prisma/client": "^4.14.1",
 		"lucia-auth": "^1.7.0",
 		"prisma-error-enum": "^0.1.3",

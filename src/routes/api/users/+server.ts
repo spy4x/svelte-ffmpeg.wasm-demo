@@ -1,5 +1,5 @@
 import { auth } from '$lib/server/lucia';
-import { json, type RequestEvent } from '@sveltejs/kit';
+import { json, type RequestEvent, type RequestHandler } from '@sveltejs/kit';
 import { z } from 'zod';
 
 const POST_PAYLOAD = z.object({
@@ -7,12 +7,12 @@ const POST_PAYLOAD = z.object({
 	password: z.string().min(8)
 });
 
-export async function POST(event: RequestEvent): Promise<Response> {
-	if (event.locals.user) {
+export const POST: RequestHandler = async ({ locals, request, cookies }) => {
+	if (locals.user) {
 		console.log('User already signed in');
-		return json(event.locals.user);
+		return json(locals.user);
 	}
-	const payload = await event.request.json();
+	const payload = await request.json();
 	const parseResult = POST_PAYLOAD.safeParse(payload);
 	if (!parseResult.success) {
 		return json(parseResult.error.format(), { status: 400 });
@@ -33,11 +33,16 @@ export async function POST(event: RequestEvent): Promise<Response> {
 
 		const session = await auth.createSession(user.userId);
 		console.log({ user, session });
-		event.locals.auth.setSession(session);
+		locals.auth.setSession(session);
+		// set js-accessible cookie with user.id
+		cookies.set('user_id', user.userId, {
+			path: '/',
+			maxAge: 60 * 60
+		});
 		return json(user);
 	} catch (error: unknown) {
 		// email taken
 		console.error(error);
 		return json(error, { status: 500 });
 	}
-}
+};
