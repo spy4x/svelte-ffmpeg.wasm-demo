@@ -1,4 +1,4 @@
-import { auth, setSession } from '$lib/server/lucia';
+import { auth, setSession } from '@server';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { LuciaError } from 'lucia-auth';
 import { z } from 'zod';
@@ -9,14 +9,18 @@ const POST_PAYLOAD = z.object({
 });
 
 export const POST: RequestHandler = async ({ locals, request, cookies }) => {
-	if (locals.user) {
+	if (locals.user && locals.session) {
 		console.log('User already signed in');
+		setSession(locals.auth, cookies, locals.user, locals.session);
 		return json(locals.user);
 	}
 	const payload = await request.json();
 	const parseResult = POST_PAYLOAD.safeParse(payload);
 	if (!parseResult.success) {
-		return json(parseResult.error.format(), { status: 400 });
+		return json(
+			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
+			{ status: 400 }
+		);
 	}
 	const { email, password } = parseResult.data;
 

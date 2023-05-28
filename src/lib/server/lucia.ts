@@ -13,7 +13,7 @@ import {
 	AUTH_GOOGLE_CLIENT_SECRET
 } from '$env/static/private';
 import type { Cookies } from '@sveltejs/kit';
-import { USER_ID_COOKIE_NAME } from '$lib/shared/constants';
+import { USER_ID_COOKIE_NAME } from '@shared';
 
 export interface LuciaUser extends AuthUser {
 	userId: string;
@@ -25,11 +25,8 @@ export const auth = lucia({
 	middleware: sveltekit(),
 	transformDatabaseUser: (user): LuciaUser => {
 		return {
-			id: user.id,
-			userId: user.id,
-			email: user.email,
-			createdAt: user.createdAt,
-			updatedAt: user.updatedAt
+			...user,
+			userId: user.id
 		};
 	}
 });

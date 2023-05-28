@@ -5,9 +5,9 @@ This project is a web-based multi-video recorder that leverages Svelte as the co
 
 ## Technologies
 
-- Svelte
+- SvelteKit
 - ffmpeg.wasm
-- HTML/CSS/JavaScript
+- Postgres
 
 ## Features
 
@@ -17,24 +17,23 @@ This project is a web-based multi-video recorder that leverages Svelte as the co
 - User-friendly UI/UX
 - Download of the final video
 
-## Developing
+## Dependencies
 
-Once you've created a project and installed dependencies (`pnpm i`), start a development server:
+Use `docker compose up -d` to run the dependencies in local containers.
 
-```bash
-pnpm dev --open
-```
+List:
 
-## Building
+- Postgres
 
-To create a production version of your app:
+## Development
 
-```bash
-pnpm build
-```
+1. Install dependencies `pnpm i`
+2. Copy file `.env.example` to `.env` and fill it with values
+3. Run the development server `pnpm dev`
+4. Commit to the `main` branch to deploy to Vercel
 
-You can preview the production build with `pnpm preview`.
+## Deployment to another hosting
 
-## Deploying to the web
-
-Just push the code changes to the repository and it will be automatically deployed to Vercel.
+1. Install dependencies, fill `.env` file and build project `pnpm i && pnpm build`
+2. Copy the `build` folder to your hosting
+3. Configure your hosting to serve `index.html` for all routes

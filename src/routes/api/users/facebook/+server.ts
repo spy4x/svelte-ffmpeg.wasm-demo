@@ -1,4 +1,4 @@
-import { facebookAuth } from '$lib/server/lucia';
+import { facebookAuth } from '@server';
 import { redirect, type RequestHandler } from '@sveltejs/kit';
 import { FACEBOOK_AUTH_COOKIE_NAME } from './types';
 
@@ -10,7 +10,6 @@ export const GET: RequestHandler = async ({ cookies, locals }) => {
 
 	// get url to redirect the user to, with the state
 	const [url, state] = await facebookAuth.getAuthorizationUrl();
-	console.log({ url, state });
 
 	// the state can be stored in cookies for request validation on callback
 	cookies.set(FACEBOOK_AUTH_COOKIE_NAME, state, {

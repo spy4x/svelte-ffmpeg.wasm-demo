@@ -76,6 +76,7 @@
 	</div>
 
 	<div class="flex gap-2">
+		<input data-e2e="hint" class="input pl-4" placeholder="Hint what to do or say in this clip" />
 		{#if video.status === VideoStatus.RECORDING}
 			<button on:click={stopRecording} class="btn variant-filled-warning w-48">
 				Stop recording

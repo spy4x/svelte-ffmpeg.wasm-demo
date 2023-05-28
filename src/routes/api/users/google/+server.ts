@@ -1,5 +1,4 @@
-import { APP_URL, AUTH_GOOGLE_CLIENT_ID, AUTH_GOOGLE_CLIENT_SECRET } from '$env/static/private';
-import { googleAuth } from '$lib/server/lucia';
+import { googleAuth } from '@server';
 import { redirect, type RequestHandler } from '@sveltejs/kit';
 import { GOOGLE_AUTH_COOKIE_NAME } from './types';
 

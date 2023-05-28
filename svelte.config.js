@@ -15,7 +15,10 @@ const config = {
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 		adapter: adapter(),
 		alias: {
-			'@stores': './src/lib/stores'
+			'@stores': './src/lib/client/stores',
+			'@components': './src/lib/client/components',
+			'@shared': './src/lib/shared',
+			'@server': './src/lib/server'
 		}
 	}
 };

@@ -70,7 +70,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-5 p-10 mx-auto max-w-2xl pb-20">
+<div class="flex flex-col gap-5 mx-auto max-w-2xl pb-10">
 	{#each videos as video, index}
 		<VideoControl {video} {index} on:recorded={() => (videos = videos)} />
 	{/each}

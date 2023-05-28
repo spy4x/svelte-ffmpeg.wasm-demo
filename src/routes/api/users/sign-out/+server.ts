@@ -1,4 +1,4 @@
-import { invalidateSession } from '$lib/server/lucia';
+import { invalidateSession } from '@server';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ locals, cookies }) => {

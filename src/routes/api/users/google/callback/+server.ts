@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { auth, googleAuth, setSession } from '$lib/server/lucia';
+import { auth, googleAuth, setSession } from '@server';
 import { GOOGLE_AUTH_COOKIE_NAME } from '../types';
 
 export const GET: RequestHandler = async ({ cookies, url, locals }) => {
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ cookies, url, locals }) => {
 	// validate state
 	if (!state || !storedState || state !== storedState || !code) {
 		console.error('invalid state');
-		throw new Response(null, { status: 401 });
+		throw redirect(302, '/auth');
 	}
 
 	try {
@@ -28,7 +28,10 @@ export const GET: RequestHandler = async ({ cookies, url, locals }) => {
 			}
 			console.log('creating user...');
 			return await createUser({
-				email: providerUser.email
+				email: providerUser.email,
+				firstName: providerUser.given_name,
+				lastName: providerUser.family_name,
+				photoURL: providerUser.picture
 			});
 		};
 		const user = await getUser();
@@ -36,11 +39,8 @@ export const GET: RequestHandler = async ({ cookies, url, locals }) => {
 		const session = await auth.createSession(user.userId);
 		setSession(locals.auth, cookies, user, session);
 	} catch (e) {
-		console.error(e);
 		// invalid code
-		return new Response(null, {
-			status: 500
-		});
+		console.error(e);
 	}
 	throw redirect(302, '/auth');
 };

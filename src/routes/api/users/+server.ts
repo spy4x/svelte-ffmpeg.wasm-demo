@@ -1,6 +1,8 @@
-import { auth } from '$lib/server/lucia';
+import { auth, setSession } from '@server';
+import { Prisma } from '@prisma/client';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { z } from 'zod';
+import { QueryError } from 'prisma-error-enum';
 
 const POST_PAYLOAD = z.object({
 	email: z.string().email().max(50),
@@ -15,7 +17,10 @@ export const POST: RequestHandler = async ({ locals, request, cookies }) => {
 	const payload = await request.json();
 	const parseResult = POST_PAYLOAD.safeParse(payload);
 	if (!parseResult.success) {
-		return json(parseResult.error.format(), { status: 400 });
+		return json(
+			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
+			{ status: 400 }
+		);
 	}
 	const { email, password } = parseResult.data;
 
@@ -32,17 +37,20 @@ export const POST: RequestHandler = async ({ locals, request, cookies }) => {
 		});
 
 		const session = await auth.createSession(user.userId);
-		console.log({ user, session });
-		locals.auth.setSession(session);
-		// set js-accessible cookie with user.id
-		cookies.set('user_id', user.userId, {
-			path: '/',
-			maxAge: 60 * 60
-		});
+		setSession(locals.auth, cookies, user, session);
 		return json(user);
 	} catch (error: unknown) {
-		// email taken
+		if (error instanceof Prisma.PrismaClientKnownRequestError) {
+			if (error.code === QueryError.UniqueConstraintViolation) {
+				return json(
+					{
+						message: 'The provided email is already in use.'
+					},
+					{ status: 401 }
+				);
+			}
+		}
 		console.error(error);
-		return json(error, { status: 500 });
+		return json({ message: 'Server Error' }, { status: 500 });
 	}
 };

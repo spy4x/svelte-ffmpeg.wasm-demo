@@ -6,8 +6,8 @@
 	// Most of your app wide CSS should be put in this file
 	import '../app.postcss';
 	import { AppShell, AppBar, Toast } from '@skeletonlabs/skeleton';
-	import { AuthStatus, auth } from '@stores';
-	import Loading from './loading.svelte';
+	import { AuthOperation, AuthStatus, auth } from '@stores';
+	import { Loading } from '@components';
 	import { goto } from '$app/navigation';
 
 	async function signOut() {
@@ -32,10 +32,13 @@
 						Proof of concept
 					</a>
 					<button class="btn btn-sm variant-ghost-secondary" on:click={signOut}>
-						{#if $auth.status === AuthStatus.IN_PROGRESS}
+						{#if $auth.status === AuthStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
 							<Loading /> Processing...
 						{:else}
-							{$auth.user.email}, Sign out
+							{#if $auth.user.photoURL}
+								<img src={$auth.user.photoURL} class="w-6 h-6 rounded-full mr-2" alt="avatar" />
+							{/if}
+							Sign out
 						{/if}
 					</button>
 				{:else}
@@ -46,7 +49,7 @@
 	</svelte:fragment>
 
 	<!-- Page Route Content -->
-	<div class="p-6">
+	<div class="p-6 h-full">
 		<slot />
 	</div>
 </AppShell>

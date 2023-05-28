@@ -1,7 +1,7 @@
 import { building } from '$app/environment';
 import { Prisma, PrismaClient } from '@prisma/client';
 
-// import { PrismaError } from 'prisma-error-enum';
+import { PrismaError } from 'prisma-error-enum';
 
 export class PrismaService extends PrismaClient {
 	constructor() {
@@ -47,46 +47,46 @@ export class PrismaService extends PrismaClient {
 		});
 	}
 
-	// private trackConnectionIssues(): void {
-	// 	// Handle database connection issues - kill instance if connection is lost
-	// 	this.$use(
-	// 		async (
-	// 			params: Prisma.MiddlewareParams,
-	// 			next: (params: Prisma.MiddlewareParams) => Promise<unknown>
-	// 		): Promise<unknown> => {
-	// 			try {
-	// 				return await next(params);
-	// 			} catch (error: unknown) {
-	// 				if (error instanceof Error) {
-	// 					let reasonForTermination = '';
+	private trackConnectionIssues(): void {
+		// Handle database connection issues - kill instance if connection is lost
+		this.$use(
+			async (
+				params: Prisma.MiddlewareParams,
+				next: (params: Prisma.MiddlewareParams) => Promise<unknown>
+			): Promise<unknown> => {
+				try {
+					return await next(params);
+				} catch (error: unknown) {
+					if (error instanceof Error) {
+						let reasonForTermination = '';
 
-	// 					if (error instanceof Prisma.PrismaClientInitializationError) {
-	// 						reasonForTermination = 'PrismaClientInitializationError';
-	// 					}
-	// 					if (error instanceof Prisma.PrismaClientRustPanicError) {
-	// 						reasonForTermination = 'PrismaClientRustPanicError';
-	// 					}
-	// 					if (error instanceof Prisma.PrismaClientKnownRequestError) {
-	// 						if (error.code === PrismaError.CouldNotConnectToDatabase) {
-	// 							reasonForTermination = 'Database connection error';
-	// 						}
-	// 						if (error.code === PrismaError.ConnectionTimedOut) {
-	// 							reasonForTermination = 'Database connection timed out';
-	// 						}
-	// 					}
-	// 					if (reasonForTermination) {
-	// 						this.logService.error({
-	// 							message: `FATAL: ${reasonForTermination}. Terminating instance...`,
-	// 							error
-	// 						});
-	// 						process.exit(ONE); // exit with failure
-	// 					}
-	// 				}
-	// 				throw error;
-	// 			}
-	// 		}
-	// 	);
-	// }
+						if (error instanceof Prisma.PrismaClientInitializationError) {
+							reasonForTermination = 'PrismaClientInitializationError';
+						}
+						if (error instanceof Prisma.PrismaClientRustPanicError) {
+							reasonForTermination = 'PrismaClientRustPanicError';
+						}
+						if (error instanceof Prisma.PrismaClientKnownRequestError) {
+							if (error.code === PrismaError.CouldNotConnectToDatabase) {
+								reasonForTermination = 'Database connection error';
+							}
+							if (error.code === PrismaError.ConnectionTimedOut) {
+								reasonForTermination = 'Database connection timed out';
+							}
+						}
+						if (reasonForTermination) {
+							console.error({
+								message: `FATAL: ${reasonForTermination}. Terminating instance...`,
+								error
+							});
+							process.exit(1); // exit with failure
+						}
+					}
+					throw error;
+				}
+			}
+		);
+	}
 }
 
 export const prisma = new PrismaService();

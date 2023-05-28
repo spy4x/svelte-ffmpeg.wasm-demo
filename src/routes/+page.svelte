@@ -1,9 +1,3 @@
-<script>
-	import { Avatar } from '@skeletonlabs/skeleton';
-</script>
-
-<!-- YOU CAN DELETE EVERYTHING IN THIS PAGE -->
-
 <div class="container h-full mx-auto flex justify-center items-center">
 	<div class="space-y-10 text-center flex flex-col items-center">
 		<h2 class="h2">Welcome to Roley.</h2>
@@ -14,10 +8,8 @@
 		</figure>
 		<!-- / -->
 		<div class="space-y-2">
-			<p>
-				<code class="code"
-					>We'll replace this page with a proper landing page that explains the project idea.</code
-				>
+			<p class="variant-glass-tertiary p-2 rounded-lg">
+				We'll replace this page with a proper landing page that explains the project idea.
 			</p>
 		</div>
 	</div>

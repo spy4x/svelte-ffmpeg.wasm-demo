@@ -6,11 +6,16 @@ export function createStoreMutator<T>(store: Writable<T>) {
 	};
 }
 
+export interface RequestHelperError {
+	status: number;
+	body: unknown;
+}
+
 export async function request<T>(
 	url: string,
 	method: 'GET' | 'POST' | 'PATCH' = 'GET',
 	payload?: unknown
-): Promise<[null, T] | [object, null]> {
+): Promise<[null, T] | [RequestHelperError, null]> {
 	const extraParams: { body?: string; headers?: { [key: string]: string } } = {};
 	if (payload) {
 		extraParams.body = JSON.stringify(payload);
@@ -35,6 +40,6 @@ export async function request<T>(
 		return [null, json];
 	} else {
 		console.error(json);
-		return [json, null];
+		return [{ status: response.status, body: json }, null];
 	}
 }
