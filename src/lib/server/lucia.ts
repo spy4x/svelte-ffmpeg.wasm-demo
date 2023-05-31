@@ -78,7 +78,7 @@ export const facebookAuth = facebook(auth, {
 	clientId: AUTH_FACEBOOK_APP_ID,
 	clientSecret: AUTH_FACEBOOK_APP_SECRET,
 	redirectUri: APP_URL + '/api/users/facebook/callback',
-	scope: ['email', 'public_profile']
+	scope: ['public_profile']
 });
 
 export type Auth = typeof auth;
