@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ScenarioOperationType, scenarios } from '@stores';
+	import { Loading } from '@components';
 	import { AsyncOperationStatus, type ScenarioCreate } from '@shared';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
@@ -60,7 +61,14 @@
 			</section>
 			<footer class="card-footer flex justify-end gap-3">
 				<a href="/scenarios" class="btn variant-ghost-tertiary">Cancel</a>
-				<button class="btn variant-filled-primary">Create</button>
+				<button class="btn variant-filled-primary">
+					{#if $scenarios.operations[scenario.id]?.type === ScenarioOperationType.CREATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+						<Loading />
+						Creating...
+					{:else}
+						Create
+					{/if}
+				</button>
 			</footer>
 		</div>
 	</form>

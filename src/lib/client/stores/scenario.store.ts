@@ -11,6 +11,7 @@ import { browser } from '$app/environment';
 import type { Scenario } from '@prisma/client';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import { auth } from './auth.store';
+import { toastStore } from '@skeletonlabs/skeleton';
 
 export enum ScenarioOperationType {
 	CREATE = 'CREATE',
@@ -138,6 +139,15 @@ export const scenarios = {
 				ids: [scenario.id, ...state.list.ids],
 				data: { ...state.list.data, [scenario.id]: scenario }
 			});
+			toastStore.trigger({
+				message: 'Scenario created successfully',
+				background: 'variant-filled-success'
+			});
+		} else {
+			toastStore.trigger({
+				message: 'Scenario creation failed',
+				background: 'variant-filled-warning'
+			});
 		}
 	},
 	update: async (data: ScenarioUpdate): Promise<void> => {
@@ -169,6 +179,15 @@ export const scenarios = {
 			mutateList({
 				data: { ...state.list.data, [scenario.id]: scenario }
 			});
+			toastStore.trigger({
+				message: 'Scenario updated successfully',
+				background: 'variant-filled-success'
+			});
+		} else {
+			toastStore.trigger({
+				message: 'Scenario update failed',
+				background: 'variant-filled-warning'
+			});
 		}
 	},
 	delete: async (id: string): Promise<void> => {
@@ -182,27 +201,52 @@ export const scenarios = {
 		) {
 			return;
 		}
-
-		mutateOperation(id, {
-			type: ScenarioOperationType.DELETE,
-			payload: id,
-			status: AsyncOperationStatus.IN_PROGRESS,
-			error: null
-		});
-
-		const [error] = await request(`/api/scenarios/${id}`, 'DELETE');
-		// update operation status
-		mutateOperation(id, {
-			status: error ? AsyncOperationStatus.ERROR : AsyncOperationStatus.SUCCESS,
-			error
-		});
-		if (!error) {
-			const { [id]: _, ...rest } = state.list.data;
-			mutateList({
-				ids: state.list.ids.filter((i) => i !== id),
-				data: rest
+		const scenario = state.list.data[id];
+		if (!scenario) {
+			toastStore.trigger({
+				message: `Scenario "${id}" not found`,
+				background: 'variant-filled-warning'
 			});
+			return;
 		}
+
+		toastStore.trigger({
+			message: `Delete scenario "${scenario.title}"?`,
+			action: {
+				label: 'Yes',
+				response: async () => {
+					mutateOperation(id, {
+						type: ScenarioOperationType.DELETE,
+						payload: id,
+						status: AsyncOperationStatus.IN_PROGRESS,
+						error: null
+					});
+
+					const [error] = await request(`/api/scenarios/${id}`, 'DELETE');
+					// update operation status
+					mutateOperation(id, {
+						status: error ? AsyncOperationStatus.ERROR : AsyncOperationStatus.SUCCESS,
+						error
+					});
+					if (error) {
+						toastStore.trigger({
+							message: 'Scenario deletion failed',
+							background: 'variant-filled-warning'
+						});
+					} else {
+						const { [id]: _, ...rest } = state.list.data;
+						mutateList({
+							ids: state.list.ids.filter((i) => i !== id),
+							data: rest
+						});
+						toastStore.trigger({
+							message: 'Scenario deleted successfully',
+							background: 'variant-filled-success'
+						});
+					}
+				}
+			}
+		});
 	}
 };
 

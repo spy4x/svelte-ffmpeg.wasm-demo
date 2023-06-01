@@ -1,18 +1,33 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Loading, Debug } from '@components';
-	import { scenarios } from '@stores';
+	import { ScenarioOperationType, scenarios } from '@stores';
 	import { onMount } from 'svelte';
 	import type { Scenario } from '@prisma/client';
 	import { AsyncOperationStatus } from '@shared';
+	import { toastStore } from '@skeletonlabs/skeleton';
+	import { goto } from '$app/navigation';
 
 	let id: string;
 	let scenario: null | Scenario;
 	onMount(() => {
 		id = $page.params.id;
 		const unsubscribe = scenarios.subscribe((s) => {
-			const sc = s.getById(id);
-			scenario = structuredClone(sc);
+			const isListLoaded = s.list.status === AsyncOperationStatus.SUCCESS;
+			const isUpdateInProgress =
+				s.operations[id]?.type === ScenarioOperationType.UPDATE &&
+				s.operations[id]?.status === AsyncOperationStatus.IN_PROGRESS;
+			if (s.list.status === AsyncOperationStatus.SUCCESS && !isUpdateInProgress) {
+				const sc = s.getById(id);
+				if (!sc) {
+					toastStore.trigger({
+						message: 'Scenario not found',
+						background: 'variant-filled-warning'
+					});
+					goto('/scenarios');
+				}
+				scenario = structuredClone(sc);
+			}
 		});
 		return unsubscribe;
 	});
@@ -25,7 +40,7 @@
 			on:submit|preventDefault={() => void scenarios.update(scenario)}
 		>
 			<div class="card">
-				<header class="card-header">Update scenario</header>
+				<header class="card-header">Edit scenario</header>
 				<section class="p-4">
 					<div class="flex flex-col gap-5">
 						<label>
@@ -126,7 +141,14 @@
 				<hr class="opacity-50" />
 				<footer class="card-footer p-4 flex justify-end gap-3">
 					<a href="/scenarios" class="btn variant-ghost-tertiary">Cancel</a>
-					<button class="btn variant-filled-primary">Update</button>
+					<button class="btn variant-filled-primary">
+						{#if $scenarios.operations[scenario.id]?.type === ScenarioOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+							<Loading />
+							Updating...
+						{:else}
+							Update
+						{/if}
+					</button>
 				</footer>
 			</div>
 

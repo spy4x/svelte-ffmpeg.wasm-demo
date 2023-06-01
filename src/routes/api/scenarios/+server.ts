@@ -15,6 +15,9 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const [data, total] = await prisma.$transaction([
 		prisma.scenario.findMany({
 			where,
+			orderBy: {
+				updatedAt: 'desc'
+			},
 			skip: (page - 1) * perPage,
 			take: perPage
 		}),

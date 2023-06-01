@@ -55,7 +55,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 				id
 			}
 		});
-		return json({ message: 'deleted' }, { status: 204 });
+		return json({ message: 'deleted' });
 	} catch (error: unknown) {
 		// if (error instanceof Prisma.PrismaClientKnownRequestError) {
 		// 	if (error.code === QueryError.UniqueConstraintViolation) {
