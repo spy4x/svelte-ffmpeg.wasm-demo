@@ -6,9 +6,10 @@
 	// Most of your app wide CSS should be put in this file
 	import '../app.postcss';
 	import { AppShell, AppBar, Toast } from '@skeletonlabs/skeleton';
-	import { AuthOperation, AuthStatus, auth } from '@stores';
+	import { AuthOperation, auth } from '@stores';
 	import { Loading } from '@components';
 	import { goto } from '$app/navigation';
+	import { AsyncOperationStatus } from '@shared';
 
 	async function signOut() {
 		await auth.signOut();
@@ -28,11 +29,12 @@
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				{#if $auth.user}
+					<a class="btn btn-sm variant-ghost-primary" href="/scenarios"> Scenarios </a>
 					<a class="btn btn-sm variant-ghost-primary" href="/proof-of-concept">
 						Proof of concept
 					</a>
 					<button class="btn btn-sm variant-ghost-secondary" on:click={signOut}>
-						{#if $auth.status === AuthStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
+						{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
 							<Loading /> Processing...
 						{:else}
 							{#if $auth.user.photoURL}

@@ -22,35 +22,68 @@ model AuthUser {
   photoURL     String?       @map("photo_url") @db.VarChar(400)
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+  movies       Movie[]
+  Scenario     Scenario[]
 
   @@map("users")
 }
 
 model AuthSession {
-  id             String   @id @unique
+  id             String   @id @unique @db.VarChar(40)
   user_id        String   @db.VarChar(15)
   active_expires BigInt
   idle_expires   BigInt
   auth_user      AuthUser @relation(references: [id], fields: [user_id], onDelete: Cascade)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([user_id])
   @@map("user_auth_sessions")
 }
 
 model AuthKey {
-  id              String   @id @unique
+  id              String   @id @unique @db.VarChar(28)
   hashed_password String?  @db.VarChar(150)
   user_id         String   @db.VarChar(15)
   primary_key     Boolean
   expires         BigInt?
   auth_user       AuthUser @relation(references: [id], fields: [user_id], onDelete: Cascade)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([user_id])
   @@map("user_auth_keys")
+}
+
+model Scenario {
+  id          String   @id @unique @db.VarChar(15)
+  userId      String?  @map("user_id") @db.VarChar(15)
+  title       String   @db.VarChar(100)
+  description String   @db.VarChar(1000)
+  attachments Json[]   @default([]) @db.JsonB
+  actors      String[] @db.VarChar(100)
+  scenes      Json[]   @default([]) @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user AuthUser? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map(name: "scenarios")
+}
+
+model Movie {
+  id          String   @id @unique @db.VarChar(15)
+  userId      String   @map("user_id") @db.VarChar(15)
+  scenarioId  String?  @map("scenario_id") @db.VarChar(15)
+  title       String   @db.VarChar(100)
+  clips       Json[]   @default([]) @db.JsonB
+  videoURL    String?  @map("video_url") @db.VarChar(400)
+  videoMD5    String?  @map("video_md5") @db.VarChar(32)
+  durationSec Int      @map("duration_sec") @db.Integer
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map(name: "movies")
 }

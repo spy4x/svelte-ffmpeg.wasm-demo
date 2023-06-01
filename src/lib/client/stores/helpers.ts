@@ -13,7 +13,7 @@ export interface RequestHelperError {
 
 export async function request<T>(
 	url: string,
-	method: 'GET' | 'POST' | 'PATCH' = 'GET',
+	method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET',
 	payload?: unknown
 ): Promise<[null, T] | [RequestHelperError, null]> {
 	const extraParams: { body?: string; headers?: { [key: string]: string } } = {};

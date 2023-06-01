@@ -1,8 +1,9 @@
-<script>
+<script lang="ts">
 	import { goto } from '$app/navigation';
-	import { AuthOperation, AuthStatus, auth } from '@stores';
+	import { AuthOperation, auth } from '@stores';
 	import { onMount } from 'svelte';
 	import { Loading } from '@components';
+	import { AsyncOperationStatus } from '@shared';
 
 	let email = '';
 	let password = '';
@@ -19,7 +20,7 @@
 		// subscribe to state and redirect on success as well as remove the subscription
 		const unsubscribe = auth.subscribe((state) => {
 			if (state.user) {
-				goto('/proof-of-concept');
+				goto('/scenarios');
 				setTimeout(() => unsubscribe());
 			}
 		});
@@ -64,7 +65,7 @@
 			<!-- Grid of two 50% columns -->
 			<div class="grid grid-cols-2 gap-3">
 				<button on:click={signIn} type="button" class="btn variant-ringed-primary">
-					{#if $auth.status === AuthStatus.IN_PROGRESS && $auth.operation === AuthOperation.SIGN_IN}
+					{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && $auth.operation === AuthOperation.SIGN_IN}
 						<Loading />
 						<span>Signing in...</span>
 					{:else}
@@ -72,7 +73,7 @@
 					{/if}
 				</button>
 				<button on:click={signUp} type="button" class="btn variant-filled-primary">
-					{#if $auth.status === AuthStatus.IN_PROGRESS && $auth.operation === AuthOperation.SIGN_UP}
+					{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && $auth.operation === AuthOperation.SIGN_UP}
 						<Loading />
 						<span>Signing up...</span>
 					{:else}
@@ -80,7 +81,7 @@
 					{/if}
 				</button>
 			</div>
-			{#if $auth.status === AuthStatus.ERROR}
+			{#if $auth.status === AsyncOperationStatus.ERROR}
 				<p class="text-center variant-ghost-error p-4">
 					{$auth.error?.body?.message || 'Operation failed'}
 				</p>
@@ -95,7 +96,7 @@
 				href={auth.signInWithGoogleURL}
 				class="btn variant-filled-surface"
 			>
-				{#if $auth.status === AuthStatus.IN_PROGRESS && $auth.operation === AuthOperation.GOOGLE}
+				{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && $auth.operation === AuthOperation.GOOGLE}
 					<Loading />
 				{:else}
 					<img src="/img/google.svg" class="w-6 h-6 mr-1" alt="Google logo" />
@@ -107,7 +108,7 @@
 				href={auth.signInWithFacebookURL}
 				class="btn variant-filled-surface"
 			>
-				{#if $auth.status === AuthStatus.IN_PROGRESS && $auth.operation === AuthOperation.FACEBOOK}
+				{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && $auth.operation === AuthOperation.FACEBOOK}
 					<Loading />
 				{:else}
 					<img src="/img/facebook.svg" class="w-6 h-6 mr-1" alt="Facebook logo" />
