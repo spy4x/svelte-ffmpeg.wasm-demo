@@ -8,7 +8,7 @@
 		</figure>
 		<!-- / -->
 		<div class="space-y-2">
-			<p class="variant-glass-tertiary p-2 rounded-lg">
+			<p class="variant-glass-tertiary py-2 px-4 rounded-lg">
 				We'll replace this page with a proper landing page that explains the project idea.
 			</p>
 		</div>

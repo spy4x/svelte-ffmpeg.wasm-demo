@@ -140,13 +140,13 @@
 				</section>
 				<hr class="opacity-50" />
 				<footer class="card-footer p-4 flex justify-end gap-3">
-					<a href="/scenarios" class="btn variant-ghost-tertiary">Cancel</a>
+					<a href="/scenarios" class="btn variant-ringed-primary">Cancel</a>
 					<button class="btn variant-filled-primary">
 						{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 							<Loading />
-							Updating...
+							Saving...
 						{:else}
-							Update
+							Save
 						{/if}
 					</button>
 				</footer>

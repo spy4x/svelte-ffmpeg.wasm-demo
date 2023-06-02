@@ -3,9 +3,10 @@
 	import { Loading, Debug } from '@components';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
 	import { format } from 'date-fns';
+	import {Avatar} from "@skeletonlabs/skeleton";
 </script>
 
-<div class="container h-full mx-auto flex flex-col justify-center items-center">
+<div class="container h-full mx-auto flex flex-col items-center">
 	{#if $scenarios.list.status === AsyncOperationStatus.IDLE || $scenarios.list.status === AsyncOperationStatus.IN_PROGRESS}
 		<Loading />
 	{:else if $scenarios.list.status === AsyncOperationStatus.ERROR}
@@ -20,32 +21,36 @@
 				<a href="/scenarios/new" class="btn variant-filled-primary">Create</a>
 			</div>
 		{:else}
-			<div class="flex justify-end w-full">
+			<div class="flex justify-end w-full mb-6">
 				<a href="/scenarios/new" class="btn variant-filled-primary">Create</a>
 			</div>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+			<div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 				{#each $scenarios.list.data as scenario}
 					<a href={`/scenarios/${scenario.id}`} class="block">
 						<div class="card">
 							<header class="card-header">
-								<span class="card-header-title underline">
-									{scenario.title}
-								</span>
+								<h3 class="h3">{scenario.title}</h3>
+								<div class="text-xs">
+									<span class="opacity-60">Updated at:</span>
+									<span>
+										{format(new Date(scenario.updatedAt), 'dd MMM h:mm aaa')}
+									</span>
+								</div>
 							</header>
 							<section class="p-4">
 								<div data-e2e="actors" class="flex gap-1">
 									{#each scenario.actors as actor}
-										<span class="chip variant-soft">{actor}</span>
+										<span class="chip rounded-full p-0 pr-4 variant-soft">
+											<Avatar width="w-10" initials="{actor}" background="bg-gradient-to-br variant-gradient-secondary-tertiary" />
+											<span class="ml-2">{actor}</span>
+										</span>
 									{/each}
 								</div>
-								<span class="text-surface-400">
-									{format(new Date(scenario.updatedAt), 'dd MMM h:mm aaa')}
-								</span>
 							</section>
 							<hr class="opacity-50" />
-							<footer class="card-footer p-4">
+							<footer class="card-footer flex justify-between p-4">
 								<button
-									class="btn variant-filled-warning"
+									class="btn variant-filled-error"
 									on:click|stopPropagation|preventDefault={() => void scenarios.delete(scenario.id)}
 								>
 									{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.DELETE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
@@ -55,6 +60,8 @@
 										Delete
 									{/if}
 								</button>
+
+								<button type="button" class="btn variant-filled-warning">Edit</button>
 							</footer>
 						</div>
 					</a>

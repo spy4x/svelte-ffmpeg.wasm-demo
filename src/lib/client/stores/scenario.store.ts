@@ -208,7 +208,7 @@ export const scenarios = {
 		toastStore.trigger({
 			message: `Delete scenario "${scenario.title}"?`,
 			action: {
-				label: 'Yes',
+				label: 'Yes, delete',
 				response: async () => {
 					mutateOperation(id, {
 						type: EntityOperationType.DELETE,
@@ -240,7 +240,8 @@ export const scenarios = {
 						});
 					}
 				}
-			}
+			},
+			background: "variant-filled-error"
 		});
 	}
 };
