@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ScenarioOperationType, scenarios } from '@stores';
+	import { scenarios } from '@stores';
 	import { Loading } from '@components';
-	import { AsyncOperationStatus, type ScenarioCreate } from '@shared';
+	import { AsyncOperationStatus, EntityOperationType, type ScenarioCreate } from '@shared';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -20,7 +20,7 @@
 			const op = $scenarios.operations[scenario.id];
 			if (
 				op &&
-				op.type === ScenarioOperationType.CREATE &&
+				op.type === EntityOperationType.CREATE &&
 				op.status === AsyncOperationStatus.SUCCESS
 			) {
 				goto(`/scenarios/${scenario.id}`);
@@ -62,7 +62,7 @@
 			<footer class="card-footer flex justify-end gap-3">
 				<a href="/scenarios" class="btn variant-ghost-tertiary">Cancel</a>
 				<button class="btn variant-filled-primary">
-					{#if $scenarios.operations[scenario.id]?.type === ScenarioOperationType.CREATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+					{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.CREATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 						<Loading />
 						Creating...
 					{:else}

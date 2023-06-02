@@ -2,21 +2,21 @@ import { request, type RequestHelperError } from './helpers';
 import {
 	AsyncOperationStatus,
 	USER_ID_COOKIE_NAME,
-	type ScenarioCreate,
-	type ScenarioUpdate,
-	type ScenarioDelete,
+	type MovieCreate,
+	type MovieUpdate,
+	type MovieDelete,
 	type ResponseList,
 	EntityOperationType
 } from '@shared';
 import { browser } from '$app/environment';
-import type { Scenario } from '@prisma/client';
+import type { Movie } from '@prisma/client';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import { auth } from './auth.store';
 import { toastStore } from '@skeletonlabs/skeleton';
 
-export interface ScenarioOperation {
+export interface MovieOperation {
 	type: EntityOperationType;
-	payload: ScenarioCreate | ScenarioUpdate | ScenarioDelete;
+	payload: MovieCreate | MovieUpdate | MovieDelete;
 	status: AsyncOperationStatus;
 	error: null | RequestHelperError;
 }
@@ -24,23 +24,23 @@ export interface ScenarioOperation {
 interface DataState {
 	list: {
 		ids: string[];
-		data: { [id: string]: Scenario };
+		data: { [id: string]: Movie };
 		total: number;
 		perPage: number;
 		status: AsyncOperationStatus;
 		error: null | RequestHelperError;
 	};
-	operations: { [id: string]: ScenarioOperation };
+	operations: { [id: string]: MovieOperation };
 }
 interface ViewState {
 	list: {
-		data: Scenario[];
+		data: Movie[];
 		status: AsyncOperationStatus;
 		error: null | RequestHelperError;
 	};
-	operations: { [id: string]: ScenarioOperation };
-	getById: (id: string) => null | Scenario;
-	getOperationById: (id: string) => null | ScenarioOperation;
+	operations: { [id: string]: MovieOperation };
+	getById: (id: string) => null | Movie;
+	getOperationById: (id: string) => null | MovieOperation;
 }
 
 const initialValue: DataState = {
@@ -63,7 +63,7 @@ function mutate(state: Partial<DataState>) {
 function mutateList(state: Partial<DataState['list']>) {
 	mutate({ list: { ...get(dataStore).list, ...state } });
 }
-function mutateOperation(id: string, state: Partial<ScenarioOperation>) {
+function mutateOperation(id: string, state: Partial<MovieOperation>) {
 	mutate({
 		operations: {
 			...get(dataStore).operations,
@@ -86,7 +86,7 @@ const viewStore = derived<Writable<DataState>, ViewState>(dataStore, (state) => 
 	getOperationById: (id: string) => state.operations[id]
 }));
 
-export const scenarios = {
+export const movies = {
 	subscribe: viewStore.subscribe,
 	fetchList: async (): Promise<void> => {
 		// if list.status === in progress - do nothing
@@ -94,7 +94,7 @@ export const scenarios = {
 			return;
 		}
 		mutateList({ status: AsyncOperationStatus.IN_PROGRESS, error: null });
-		const [error, list] = await request<ResponseList<Scenario>>('/api/scenarios');
+		const [error, list] = await request<ResponseList<Movie>>('/api/movies');
 		mutateList({
 			status: list ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			ids: list ? list.data.map((s) => s.id) : [],
@@ -104,7 +104,7 @@ export const scenarios = {
 			error
 		});
 	},
-	create: async (data: ScenarioCreate): Promise<void> => {
+	create: async (data: MovieCreate): Promise<void> => {
 		const state = get(dataStore);
 		// add create operation to operations if operation with same id does not exists
 		const existingOperation = state.operations[data.id];
@@ -123,29 +123,29 @@ export const scenarios = {
 			error: null
 		});
 
-		const [error, scenario] = await request<Scenario>('/api/scenarios', 'POST', data);
+		const [error, movie] = await request<Movie>('/api/movies', 'POST', data);
 		// update operation status
 		mutateOperation(data.id, {
-			status: scenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+			status: movie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
-		if (scenario) {
+		if (movie) {
 			mutateList({
-				ids: [scenario.id, ...state.list.ids],
-				data: { ...state.list.data, [scenario.id]: scenario }
+				ids: [movie.id, ...state.list.ids],
+				data: { ...state.list.data, [movie.id]: movie }
 			});
 			toastStore.trigger({
-				message: 'Scenario created successfully',
+				message: 'Movie created successfully',
 				background: 'variant-filled-success'
 			});
 		} else {
 			toastStore.trigger({
-				message: 'Scenario creation failed',
+				message: 'Movie creation failed',
 				background: 'variant-filled-warning'
 			});
 		}
 	},
-	update: async (data: ScenarioUpdate): Promise<void> => {
+	update: async (data: MovieUpdate): Promise<void> => {
 		const state = get(dataStore);
 		// add update operation to operations if operation with same id does not exists
 		const existingOperation = state.operations[data.id];
@@ -164,23 +164,23 @@ export const scenarios = {
 			error: null
 		});
 
-		const [error, scenario] = await request<Scenario>(`/api/scenarios/${data.id}`, 'PATCH', data);
+		const [error, movie] = await request<Movie>(`/api/movies/${data.id}`, 'PATCH', data);
 		// update operation status
 		mutateOperation(data.id, {
-			status: scenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+			status: movie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
-		if (scenario) {
+		if (movie) {
 			mutateList({
-				data: { ...state.list.data, [scenario.id]: scenario }
+				data: { ...state.list.data, [movie.id]: movie }
 			});
 			toastStore.trigger({
-				message: 'Scenario updated successfully',
+				message: 'Movie updated successfully',
 				background: 'variant-filled-success'
 			});
 		} else {
 			toastStore.trigger({
-				message: 'Scenario update failed',
+				message: 'Movie update failed',
 				background: 'variant-filled-warning'
 			});
 		}
@@ -196,17 +196,17 @@ export const scenarios = {
 		) {
 			return;
 		}
-		const scenario = state.list.data[id];
-		if (!scenario) {
+		const movie = state.list.data[id];
+		if (!movie) {
 			toastStore.trigger({
-				message: `Scenario "${id}" not found`,
+				message: `Movie "${id}" not found`,
 				background: 'variant-filled-warning'
 			});
 			return;
 		}
 
 		toastStore.trigger({
-			message: `Delete scenario "${scenario.title}"?`,
+			message: `Delete movie "${movie.title}"?`,
 			action: {
 				label: 'Yes',
 				response: async () => {
@@ -217,7 +217,7 @@ export const scenarios = {
 						error: null
 					});
 
-					const [error] = await request(`/api/scenarios/${id}`, 'DELETE');
+					const [error] = await request(`/api/movies/${id}`, 'DELETE');
 					// update operation status
 					mutateOperation(id, {
 						status: error ? AsyncOperationStatus.ERROR : AsyncOperationStatus.SUCCESS,
@@ -225,7 +225,7 @@ export const scenarios = {
 					});
 					if (error) {
 						toastStore.trigger({
-							message: 'Scenario deletion failed',
+							message: 'Movie deletion failed',
 							background: 'variant-filled-warning'
 						});
 					} else {
@@ -235,7 +235,7 @@ export const scenarios = {
 							data: rest
 						});
 						toastStore.trigger({
-							message: 'Scenario deleted successfully',
+							message: 'Movie deleted successfully',
 							background: 'variant-filled-success'
 						});
 					}
@@ -251,7 +251,7 @@ function init() {
 		return;
 	}
 	if (document.cookie.includes(USER_ID_COOKIE_NAME)) {
-		scenarios.fetchList();
+		movies.fetchList();
 	}
 	let previousAuthStatus = get(auth).status;
 	auth.subscribe((authState) => {
@@ -260,7 +260,7 @@ function init() {
 			authState.status === AsyncOperationStatus.SUCCESS
 		) {
 			previousAuthStatus = authState.status;
-			scenarios.fetchList();
+			movies.fetchList();
 		}
 		if (previousAuthStatus !== authState.status && authState.status === AsyncOperationStatus.IDLE) {
 			previousAuthStatus = authState.status;

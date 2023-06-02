@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Loading, Debug } from '@components';
-	import { ScenarioOperationType, scenarios } from '@stores';
+	import { scenarios } from '@stores';
 	import { onMount } from 'svelte';
 	import type { Scenario } from '@prisma/client';
-	import { AsyncOperationStatus } from '@shared';
+	import { AsyncOperationStatus, EntityOperationType } from '@shared';
 	import { toastStore } from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
 
@@ -15,7 +15,7 @@
 		const unsubscribe = scenarios.subscribe((s) => {
 			const isListLoaded = s.list.status === AsyncOperationStatus.SUCCESS;
 			const isUpdateInProgress =
-				s.operations[id]?.type === ScenarioOperationType.UPDATE &&
+				s.operations[id]?.type === EntityOperationType.UPDATE &&
 				s.operations[id]?.status === AsyncOperationStatus.IN_PROGRESS;
 			if (s.list.status === AsyncOperationStatus.SUCCESS && !isUpdateInProgress) {
 				const sc = s.getById(id);
@@ -142,7 +142,7 @@
 				<footer class="card-footer p-4 flex justify-end gap-3">
 					<a href="/scenarios" class="btn variant-ghost-tertiary">Cancel</a>
 					<button class="btn variant-filled-primary">
-						{#if $scenarios.operations[scenario.id]?.type === ScenarioOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+						{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 							<Loading />
 							Updating...
 						{:else}

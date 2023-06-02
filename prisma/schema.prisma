@@ -76,6 +76,7 @@ model Movie {
   userId      String   @map("user_id") @db.VarChar(15)
   scenarioId  String?  @map("scenario_id") @db.VarChar(15)
   title       String   @db.VarChar(100)
+  actors      String[] @db.VarChar(100)
   clips       Json[]   @default([]) @db.JsonB
   videoURL    String?  @map("video_url") @db.VarChar(400)
   videoMD5    String?  @map("video_md5") @db.VarChar(32)

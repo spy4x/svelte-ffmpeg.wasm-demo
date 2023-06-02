@@ -30,9 +30,7 @@
 			<svelte:fragment slot="trail">
 				{#if $auth.user}
 					<a class="btn btn-sm variant-ghost-primary" href="/scenarios"> Scenarios </a>
-					<a class="btn btn-sm variant-ghost-primary" href="/proof-of-concept">
-						Proof of concept
-					</a>
+					<a class="btn btn-sm variant-ghost-primary" href="/movies"> Movies </a>
 					<button class="btn btn-sm variant-ghost-secondary" on:click={signOut}>
 						{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
 							<Loading /> Processing...
