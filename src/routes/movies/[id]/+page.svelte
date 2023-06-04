@@ -76,7 +76,7 @@
 		</AppBar>
 
 		<form data-e2e="new-movie-form" on:submit|preventDefault={() => void movies.update(movie)}
-			  class="grid lg:grid-cols-3 gap-12">
+			  class="grid lg:grid-cols-3 gap-12 mb-24">
 
 			<div class="card p-8 flex flex-col gap-5">
 
@@ -185,28 +185,36 @@
 								</div>
 							{/if}
 						{/each}
-						{#if showMoreUI}
-							<button
-								on:click={() =>
-									(movie.clips = [...movie.clips, { actor: movie.actors[0], description: '' }])}
-								type="button"
-								class="btn variant-ghost-surface"
-							>
-								Add clip
-							</button>
-						{/if}
 					</div>
-				<hr class="opacity-50" />
-				<footer class="card-footer p-4 flex justify-end gap-3">
-					<button class="btn variant-filled-primary">
-						{#if $movies.operations[movie.id]?.type === EntityOperationType.UPDATE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
-							<Loading />
-							Saving...
-						{:else}
-							Save
-						{/if}
-					</button>
-				</footer>
+				</div>
+			</div>
+
+
+			<div class="fixed bottom-6 inset-x-0">
+				<div class="container mx-auto grid lg:grid-cols-3 gap-12">
+					<div class="col-start-2 col-span-2">
+						<div class="flex items-center px-8 py-6 variant-glass-surface rounded-3xl">
+							{#if showMoreUI}
+								<button
+										on:click={() =>
+												(movie.clips = [...movie.clips, { actor: movie.actors[0], description: '' }])}
+										type="button"
+										class="btn variant-ghost-surface"
+								>
+									Add clip
+								</button>
+							{/if}
+
+							<button class="ml-auto btn variant-filled-primary">
+								{#if $movies.operations[movie.id]?.type === EntityOperationType.UPDATE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+									<Loading />
+									Saving...
+								{:else}
+									Save
+								{/if}
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 

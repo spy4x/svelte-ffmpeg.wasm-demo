@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { Loading, Debug } from '@components';
-	import { scenarios } from '@stores';
+	import {movies, scenarios} from '@stores';
 	import { onMount } from 'svelte';
 	import type { Scenario } from '@prisma/client';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
@@ -100,13 +100,13 @@
 				</div>
 			</div>
 
-			<div class="col-span-2">
+			<div class="col-span-2 space-y-6">
 				<div class="card p-8">
 					<Stepper stepTerm="Scene">
 						{#each scenario.scenes as scene, i}
 							<Step>
 								<svelte:fragment slot="header">Scene #{i+1}</svelte:fragment>
-								<div class="mt-12 mb-20 flex flex-col gap-4">
+								<div class="my-12 flex flex-col gap-4">
 									<label>
 										<span>Actor:</span>
 										<select bind:value={scene.actor} class="select" placeholder="Select actor(s)">
@@ -125,7 +125,7 @@
 										/>
 									</label>
 
-									<div class="flex items-center gap-4">
+									<div class="text-center">
 										<button
 												on:click={() =>
 										(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
@@ -134,31 +134,35 @@
 										>
 											Delete scene
 										</button>
-										<button
-												on:click={() =>
-								(scenario.scenes = [
-									...scenario.scenes,
-									{ actor: scenario.actors[0], description: '' }
-								])}
-												type="button"
-												class="ml-auto btn variant-filled-secondary"
-										>
-											Add scene
-										</button>
-
-										<button class="btn variant-filled-primary">
-											{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
-												<Loading />
-												Saving...
-											{:else}
-												Save
-											{/if}
-										</button>
 									</div>
 								</div>
 							</Step>
 						{/each}
 					</Stepper>
+				</div>
+
+
+				<div class="card px-8 py-6 flex items-center">
+					<button
+							on:click={() =>
+					(scenario.scenes = [
+						...scenario.scenes,
+						{ actor: scenario.actors[0], description: '' }
+					])}
+							type="button"
+							class="btn variant-filled-secondary"
+					>
+						Add scene
+					</button>
+
+					<button class="ml-auto btn variant-filled-primary">
+						{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+							<Loading />
+							Saving...
+						{:else}
+							Save
+						{/if}
+					</button>
 				</div>
 			</div>
 
