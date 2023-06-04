@@ -10,7 +10,7 @@
 		ListBoxItem,
 		popup,
 		toastStore,
-		type PopupSettings, AppBar
+		type PopupSettings, AppBar, Avatar
 	} from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
 
@@ -75,63 +75,70 @@
 			</svelte:fragment>
 		</AppBar>
 
-		<form data-e2e="new-movie-form" on:submit|preventDefault={() => void movies.update(movie)}>
-			<div class="card">
-				<section class="p-4">
-					<div class="flex flex-col gap-5">
+		<form data-e2e="new-movie-form" on:submit|preventDefault={() => void movies.update(movie)}
+			  class="grid lg:grid-cols-3 gap-12">
+
+			<div class="card p-8 flex flex-col gap-5">
+
+				<label>
+					<span>Title</span>
+					<input bind:value={movie.title} class="input" type="text" placeholder="Enter title" />
+				</label>
+
+				<hr class="opacity-50" />
+
+				<div class="flex flex-col gap-5">
+					<h4 class="h4">Actors</h4>
+					{#each movie.actors as actor, i}
 						<label>
-							<span>Title</span>
-							<input bind:value={movie.title} class="input" type="text" placeholder="Enter title" />
-						</label>
-
-						<hr class="opacity-50" />
-
-						<div class="flex flex-col gap-5">
-							<h4 class="h4">Actors</h4>
-							{#each movie.actors as actor, i}
-								<label>
-									<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
-										<div class="input-group-shim">#{i + 1}</div>
-										<input
-											bind:value={actor}
-											type="text"
-											placeholder="Enter actors"
-											readonly={!showMoreUI}
-										/>
-										{#if showMoreUI}
-											<button
-												on:click={() =>
+							<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
+								<div class="input-group-shim">#{i + 1}</div>
+								<input
+										bind:value={actor}
+										type="text"
+										placeholder="Enter actors"
+										readonly={!showMoreUI}
+								/>
+								{#if showMoreUI}
+									<button
+											on:click={() =>
 													(movie.actors = movie.actors.filter((a, index) => index !== i))}
-												type="button"
-												class="variant-ghost-surface"
-											>
-												X
-											</button>
-										{/if}
-									</div>
-								</label>
-							{/each}
-							{#if showMoreUI}
-								<button
-									on:click={() => (movie.actors = [...movie.actors, ''])}
-									type="button"
-									class="btn variant-ghost-surface"
-								>
-									Add actor
-								</button>
-							{/if}
-						</div>
+											type="button"
+											class="variant-ghost-surface"
+									>
+										X
+									</button>
+								{/if}
+							</div>
+						</label>
+					{/each}
+					{#if showMoreUI}
+						<button
+								on:click={() => (movie.actors = [...movie.actors, ''])}
+								type="button"
+								class="btn variant-ghost-surface"
+						>
+							Add actor
+						</button>
+					{/if}
+				</div>
+			</div>
+			<div class="col-span-2">
+				<div class="card p-8">
+					<div class="flex flex-col gap-5">
+					<!-- scenes, similar to Actors, but each scene is a multiselect of actors + a text field "description" -->
+						<h4 class="h4">Clips:</h4>
 
-						<hr class="opacity-50" />
+						{#each movie.clips as scene, i}
+							<div class="grid gap-2 {i % 2 !== 0 ? 'grid-cols-[1fr_auto]' : 'grid-cols-[auto_1fr]'}">
+								{#if i % 2 === 0}
+								<Avatar initials="{scene.actor === undefined
+											? '---No actor---'
+											: scenario?.actors[scene.actor]}" width="w-12" />
+								{/if}
+								<div class="card p-4 space-y-2  {i % 2 !== 0 ? 'variant-soft-primary rounded-tr-none' : 'variant-soft rounded-tl-none'}">
+									<header class="flex justify-between items-center">
 
-						<!-- scenes, similar to Actors, but each scene is a multiselect of actors + a text field "description" -->
-						<div class="flex flex-col gap-5">
-							<h4 class="h4">Clips:</h4>
-							{#each movie.clips as scene, i}
-								<div>
-									<div>#{i + 1}</div>
-									<label>
-										<span>Actor:</span>
 										{#if showMoreUI}
 											<select bind:value={scene.actor} class="select" placeholder="Select actor(s)">
 												<option value={undefined}>---No actor---</option>
@@ -140,46 +147,55 @@
 												{/each}
 											</select>
 										{:else}
-											<span class="chip variant-soft">
-												{scene.actor === undefined
+										<p class="font-bold">
+											{scene.actor === undefined
 													? '---No actor---'
 													: scenario?.actors[scene.actor]}
-											</span>
+										</p>
 										{/if}
-									</label>
-									<label>
-										<span>Description:</span>
-										<textarea
-											bind:value={scene.description}
-											class="textarea"
-											placeholder="Enter description"
-											readonly={!showMoreUI}
-										/>
-									</label>
+										<small class="opacity-50 srink-0 whitespace-nowrap pl-3">Scene #{i + 1}</small>
+									</header>
 									{#if showMoreUI}
-										<button
-											on:click={() => (movie.clips = movie.clips.filter((a, index) => index !== i))}
-											type="button"
-											class="btn variant-ghost-surface"
-										>
-											Delete clip
-										</button>
+										<textarea
+												bind:value={scene.description}
+												class="textarea"
+												placeholder="Enter description"
+												readonly={!showMoreUI}
+										/>
+									{:else}
+										<p>{scene.description}</p>
 									{/if}
 								</div>
-							{/each}
+								{#if i % 2 !== 0}
+									<Avatar initials="{scene.actor === undefined
+											? '---No actor---'
+											: scenario?.actors[scene.actor]}" width="w-12" />
+								{/if}
+							</div>
+
 							{#if showMoreUI}
+								<div class="text-center">
 								<button
-									on:click={() =>
-										(movie.clips = [...movie.clips, { actor: movie.actors[0], description: '' }])}
-									type="button"
-									class="btn variant-ghost-surface"
+										on:click={() => (movie.clips = movie.clips.filter((a, index) => index !== i))}
+										type="button"
+										class="btn variant-filled-error"
 								>
-									Add clip
+									Delete clip
 								</button>
+								</div>
 							{/if}
-						</div>
+						{/each}
+						{#if showMoreUI}
+							<button
+								on:click={() =>
+									(movie.clips = [...movie.clips, { actor: movie.actors[0], description: '' }])}
+								type="button"
+								class="btn variant-ghost-surface"
+							>
+								Add clip
+							</button>
+						{/if}
 					</div>
-				</section>
 				<hr class="opacity-50" />
 				<footer class="card-footer p-4 flex justify-end gap-3">
 					<button class="btn variant-filled-primary">
@@ -191,6 +207,7 @@
 						{/if}
 					</button>
 				</footer>
+				</div>
 			</div>
 
 			<!-- <Debug data={movie} />

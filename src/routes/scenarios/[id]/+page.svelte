@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import type { Scenario } from '@prisma/client';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
-	import {AppBar, Avatar, Step, Stepper, toastStore} from '@skeletonlabs/skeleton';
+	import {AppBar, Step, Stepper, toastStore} from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
 
 	let id: string;
@@ -52,117 +52,113 @@
 			on:submit|preventDefault={() => void scenarios.update(scenario)}
 			class="grid lg:grid-cols-3 gap-12"
 		>
-			<div>
-				<div class="card p-8 flex flex-col gap-5">
-					<label>
-						<span>Title</span>
-						<input
-								bind:value={scenario.title}
-								class="input"
-								type="text"
-								placeholder="Enter title"
-						/>
-					</label>
-					<label>
-						<span>Description</span>
-						<textarea
-								bind:value={scenario.description}
-								class="textarea"
-								rows="5"
-								placeholder="Enter description"
-						/>
-					</label>
+			<div class="card p-8 flex flex-col gap-5">
+				<label>
+					<span>Title</span>
+					<input
+							bind:value={scenario.title}
+							class="input"
+							type="text"
+							placeholder="Enter title"
+					/>
+				</label>
+				<label>
+					<span>Description</span>
+					<textarea
+							bind:value={scenario.description}
+							class="textarea"
+							rows="5"
+							placeholder="Enter description"
+					/>
+				</label>
 
-					<hr class="opacity-50" />
+				<hr class="opacity-50" />
 
-					<div class="flex flex-col gap-5">
-						<p>Actors</p>
-						{#each scenario.actors as actor, i}
-							<label>
-								<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
-									<div class="input-group-shim">#{i + 1}</div>
-									<input bind:value={actor} type="text" placeholder="Enter actors" />
-									<button
-											on:click={() =>
+				<div class="flex flex-col gap-5">
+					<p>Actors</p>
+					{#each scenario.actors as actor, i}
+						<label>
+							<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
+								<div class="input-group-shim">#{i + 1}</div>
+								<input bind:value={actor} type="text" placeholder="Enter actors" />
+								<button
+										on:click={() =>
 												(scenario.actors = scenario.actors.filter((a, index) => index !== i))}
-											type="button"
-											class="variant-ghost-surface"
-									>
-										X
-									</button>
-								</div>
-							</label>
-						{/each}
-						<button
-								on:click={() => (scenario.actors = [...scenario.actors, ''])}
-								type="button"
-								class="btn variant-ghost-surface">Add actor</button
-						>
-					</div>
+										type="button"
+										class="variant-ghost-surface"
+								>
+									X
+								</button>
+							</div>
+						</label>
+					{/each}
+					<button
+							on:click={() => (scenario.actors = [...scenario.actors, ''])}
+							type="button"
+							class="btn variant-ghost-surface">Add actor</button
+					>
 				</div>
 			</div>
 
 			<div class="col-span-2">
-				<div class="card">
-					<section class="p-8">
-						<Stepper stepTerm="Scene">
-							{#each scenario.scenes as scene, i}
-								<Step>
-									<svelte:fragment slot="header">Scene #{i+1}</svelte:fragment>
-									<div class="mt-12 mb-20 flex flex-col gap-4">
-										<label>
-											<span>Actor:</span>
-											<select bind:value={scene.actor} class="select" placeholder="Select actor(s)">
-												<option value={undefined}>---No actor---</option>
-												{#each scenario.actors as actor, ai}
-													<option value={ai}>{actor}</option>
-												{/each}
-											</select>
-										</label>
-										<label>
-											<span>Description:</span>
-											<textarea
-													bind:value={scene.description}
-													class="textarea"
-													placeholder="Enter description"
-											/>
-										</label>
+				<div class="card p-8">
+					<Stepper stepTerm="Scene">
+						{#each scenario.scenes as scene, i}
+							<Step>
+								<svelte:fragment slot="header">Scene #{i+1}</svelte:fragment>
+								<div class="mt-12 mb-20 flex flex-col gap-4">
+									<label>
+										<span>Actor:</span>
+										<select bind:value={scene.actor} class="select" placeholder="Select actor(s)">
+											<option value={undefined}>---No actor---</option>
+											{#each scenario.actors as actor, ai}
+												<option value={ai}>{actor}</option>
+											{/each}
+										</select>
+									</label>
+									<label>
+										<span>Description:</span>
+										<textarea
+												bind:value={scene.description}
+												class="textarea"
+												placeholder="Enter description"
+										/>
+									</label>
 
-										<div class="flex items-center gap-4">
-											<button
-													on:click={() =>
-											(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
-													type="button"
-													class="btn variant-filled-error"
-											>
-												Delete scene
-											</button>
-											<button
-													on:click={() =>
-									(scenario.scenes = [
-										...scenario.scenes,
-										{ actor: scenario.actors[0], description: '' }
-									])}
-													type="button"
-													class="ml-auto btn variant-filled-secondary"
-											>
-												Add scene
-											</button>
+									<div class="flex items-center gap-4">
+										<button
+												on:click={() =>
+										(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
+												type="button"
+												class="btn variant-filled-error"
+										>
+											Delete scene
+										</button>
+										<button
+												on:click={() =>
+								(scenario.scenes = [
+									...scenario.scenes,
+									{ actor: scenario.actors[0], description: '' }
+								])}
+												type="button"
+												class="ml-auto btn variant-filled-secondary"
+										>
+											Add scene
+										</button>
 
-											<button class="btn variant-filled-primary">
-												{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
-													<Loading />
-													Saving...
-												{:else}
-													Save
-												{/if}
-											</button>
-										</div>
+										<button class="btn variant-filled-primary">
+											{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
+												<Loading />
+												Saving...
+											{:else}
+												Save
+											{/if}
+										</button>
 									</div>
-								</Step>
-							{/each}
-						</Stepper>
-					</section>
+								</div>
+							</Step>
+						{/each}
+					</Stepper>
 				</div>
 			</div>
 
