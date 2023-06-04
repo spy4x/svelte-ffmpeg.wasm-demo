@@ -43,7 +43,17 @@
 								</div>
 							</header>
 							<section class="px-4">
-								<div data-e2e="actors" class="py-4 flex overflow-x-auto gap-1">
+								<div data-e2e="actors" class="py-4 flex overflow-x-scroll gap-1">
+									{#if !scenario.actors.length}
+										<span class="chip rounded-full p-0 pr-4 variant-soft">
+											<span class="w-10 h-10 badge-icon bg-gradient-to-br variant-gradient-secondary-tertiary">
+												<svg xmlns="http://www.w3.org/2000/svg" class="text-white h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+												  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+												</svg>
+											</span>
+											<span class="ml-2">Add actor</span>
+										</span>
+									{/if}
 									{#each scenario.actors as actor}
 										<span class="chip rounded-full p-0 pr-4 variant-soft">
 											<Avatar width="w-10" initials="{actor}" background="bg-gradient-to-br variant-gradient-secondary-tertiary" />

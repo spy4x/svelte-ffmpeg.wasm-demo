@@ -12,7 +12,9 @@
 		description: '',
 		attachments: [],
 		actors: [],
-		scenes: []
+		scenes: [{
+			description: ''
+		}]
 	};
 
 	onMount(() => {
