@@ -10,6 +10,7 @@
 	import { Loading } from '@components';
 	import { goto } from '$app/navigation';
 	import { AsyncOperationStatus } from '@shared';
+	import { page } from '$app/stores'
 
 	async function signOut() {
 		await auth.signOut();
@@ -30,8 +31,8 @@
 			<svelte:fragment slot="trail">
 				{#if $auth.user}
 					<div class="flex items-center gap-8 text-sm">
-						<a class="hover:underline underline-offset-2" href="/scenarios"> Scenarios </a>
-						<a class="hover:underline underline-offset-2" href="/movies"> Movies </a>
+						<a class="hover:underline underline-offset-2" class:underline={$page.url.pathname.startsWith("/scenarios")} href="/scenarios"> Scenarios </a>
+						<a class="hover:underline underline-offset-2" class:underline={$page.url.pathname.startsWith("/movies")} href="/movies"> Movies </a>
 						<button class="btn btn-sm variant-ghost-secondary" on:click={signOut}>
 							{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
 								<Loading /> Processing...
@@ -51,7 +52,7 @@
 	</svelte:fragment>
 
 	<!-- Page Route Content -->
-	<div class="p-6 h-full">
+	<div class="px-6 h-full">
 		<slot />
 	</div>
 </AppShell>

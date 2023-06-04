@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import type { Scenario } from '@prisma/client';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
-	import {Avatar, Step, Stepper, toastStore} from '@skeletonlabs/skeleton';
+	import {AppBar, Avatar, Step, Stepper, toastStore} from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
 
 	let id: string;
@@ -35,14 +35,18 @@
 
 <div class="container h-full mx-auto">
 	{#if scenario}
-		<div class="flex items-center mt-2 mb-10">
-			<a class="hover:opacity-50" href="/scenarios">
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-				</svg>
-			</a>
+
+		<AppBar class="w-full" background="transparent" padding="py-10 px-4">
+			<svelte:fragment slot="lead">
+				<a class="hover:opacity-50" href="/scenarios">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+					</svg>
+				</a>
+			</svelte:fragment>
 			<h1 class="h2">Edit scenario</h1>
-		</div>
+		</AppBar>
+
 		<form
 			data-e2e="new-scenario-form"
 			on:submit|preventDefault={() => void scenarios.update(scenario)}

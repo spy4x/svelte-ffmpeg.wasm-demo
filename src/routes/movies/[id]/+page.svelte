@@ -10,7 +10,7 @@
 		ListBoxItem,
 		popup,
 		toastStore,
-		type PopupSettings
+		type PopupSettings, AppBar
 	} from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';
 
@@ -49,24 +49,34 @@
 	$: showMoreUI = (movie && !movie.scenarioId) || _isAdvancedMode;
 </script>
 
-<div class="container h-full mx-auto flex justify-center items-center">
+<div class="container h-full mx-auto">
 	{#if movie}
+		<AppBar class="w-full" background="transparent" padding="py-10 px-4">
+			<svelte:fragment slot="lead">
+				<a class="hover:opacity-50" href="/movies">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+					</svg>
+				</a>
+			</svelte:fragment>
+			<h1 class="h2">Edit movie</h1>
+			<svelte:fragment slot="trail">
+				{#if movie.scenarioId}
+					{#if _isAdvancedMode}
+						<button on:click={() => (_isAdvancedMode = false)} class="btn variant-ghost-surface"
+						>Basic mode</button
+						>
+					{:else}
+						<button on:click={() => (_isAdvancedMode = true)} class="btn variant-ghost-surface"
+						>Advanced mode</button
+						>
+					{/if}
+				{/if}
+			</svelte:fragment>
+		</AppBar>
+
 		<form data-e2e="new-movie-form" on:submit|preventDefault={() => void movies.update(movie)}>
 			<div class="card">
-				<header class="card-header flex justify-between items-center">
-					<h3 class="h3">Edit movie</h3>
-					{#if movie.scenarioId}
-						{#if _isAdvancedMode}
-							<button on:click={() => (_isAdvancedMode = false)} class="btn variant-ghost-surface"
-								>Basic mode</button
-							>
-						{:else}
-							<button on:click={() => (_isAdvancedMode = true)} class="btn variant-ghost-surface"
-								>Advanced mode</button
-							>
-						{/if}
-					{/if}
-				</header>
 				<section class="p-4">
 					<div class="flex flex-col gap-5">
 						<label>
@@ -172,13 +182,12 @@
 				</section>
 				<hr class="opacity-50" />
 				<footer class="card-footer p-4 flex justify-end gap-3">
-					<a href="/movies" class="btn variant-ghost-tertiary">Cancel</a>
 					<button class="btn variant-filled-primary">
 						{#if $movies.operations[movie.id]?.type === EntityOperationType.UPDATE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 							<Loading />
-							Updating...
+							Saving...
 						{:else}
-							Update
+							Save
 						{/if}
 					</button>
 				</footer>

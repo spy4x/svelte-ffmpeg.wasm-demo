@@ -3,7 +3,7 @@
 	import { Loading, Debug } from '@components';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
 	import { format } from 'date-fns';
-	import {Avatar} from "@skeletonlabs/skeleton";
+	import {AppBar, Avatar} from "@skeletonlabs/skeleton";
 </script>
 
 <div class="container h-full mx-auto flex flex-col items-center">
@@ -21,9 +21,14 @@
 				<a href="/scenarios/new" class="btn variant-filled-primary">Create</a>
 			</div>
 		{:else}
-			<div class="flex justify-end w-full mb-6">
-				<a href="/scenarios/new" class="btn variant-filled-primary">Create</a>
-			</div>
+
+			<AppBar class="w-full" background="transparent" padding="py-10 px-4">
+				<h1 class="h2">Scenarios</h1>
+				<svelte:fragment slot="trail">
+					<a href="/scenarios/new" class="ml-auto btn variant-filled-primary">Create</a>
+				</svelte:fragment>
+			</AppBar>
+
 			<div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 				{#each $scenarios.list.data as scenario}
 					<a href={`/scenarios/${scenario.id}`} class="block">
@@ -37,8 +42,8 @@
 									</span>
 								</div>
 							</header>
-							<section class="p-4">
-								<div data-e2e="actors" class="flex gap-1">
+							<section class="px-4">
+								<div data-e2e="actors" class="py-4 flex overflow-x-auto gap-1">
 									{#each scenario.actors as actor}
 										<span class="chip rounded-full p-0 pr-4 variant-soft">
 											<Avatar width="w-10" initials="{actor}" background="bg-gradient-to-br variant-gradient-secondary-tertiary" />

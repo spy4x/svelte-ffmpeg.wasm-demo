@@ -240,7 +240,8 @@ export const movies = {
 						});
 					}
 				}
-			}
+			},
+			background: "variant-filled-error"
 		});
 	}
 };

@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { movies } from '@stores';
+	import {movies, scenarios} from '@stores';
 	import { Loading, Debug } from '@components';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
 	import { format } from 'date-fns';
+	import {AppBar, Avatar} from "@skeletonlabs/skeleton";
 </script>
 
-<div class="container h-full mx-auto flex flex-col justify-center items-center">
+<div class="container h-full mx-auto flex flex-col items-center">
 	{#if $movies.list.status === AsyncOperationStatus.IDLE || $movies.list.status === AsyncOperationStatus.IN_PROGRESS}
 		<Loading />
 	{:else if $movies.list.status === AsyncOperationStatus.ERROR}
@@ -20,33 +21,42 @@
 				<a href="/movies/new" class="btn variant-filled-primary">Create</a>
 			</div>
 		{:else}
-			<div class="flex justify-end w-full">
-				<a href="/movies/new" class="btn variant-filled-primary">Create</a>
-			</div>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+			<AppBar class="w-full" background="transparent" padding="py-10 px-4">
+				<h1 class="h2">Movies</h1>
+				<svelte:fragment slot="trail">
+					<a href="/movies/new" class="ml-auto btn variant-filled-primary">Create</a>
+				</svelte:fragment>
+			</AppBar>
+
+			<div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 				{#each $movies.list.data as movie}
 					<a href={`/movies/${movie.id}`} class="block">
 						<div class="card">
 							<header class="card-header">
-								<span class="card-header-title underline">
-									{movie.title}
-								</span>
+								<h3 class="h3">{movie.title}</h3>
+								<div class="text-xs">
+									<span class="opacity-60">Updated at:</span>
+									<span>
+										{format(new Date(movie.updatedAt), 'dd MMM h:mm aaa')}
+									</span>
+								</div>
 							</header>
-							<section class="p-4">
-								<div data-e2e="actors" class="flex gap-1">
+							<section class="px-4">
+								<div data-e2e="actors" class="py-4 flex overflow-x-auto gap-1">
 									{#each movie.actors as actor}
-										<span class="chip variant-soft">{actor}</span>
+										<span class="chip rounded-full p-0 pr-4 variant-soft">
+											<Avatar width="w-10" initials="{actor}" background="bg-gradient-to-br variant-gradient-secondary-tertiary" />
+											<span class="ml-2">{actor}</span>
+										</span>
 									{/each}
 								</div>
-								<span class="text-surface-400">
-									{format(new Date(movie.updatedAt), 'dd MMM h:mm aaa')}
-								</span>
 							</section>
 							<hr class="opacity-50" />
-							<footer class="card-footer p-4">
+							<footer class="card-footer flex justify-between p-4">
 								<button
-									class="btn variant-filled-warning"
-									on:click|stopPropagation|preventDefault={() => void movies.delete(movie.id)}
+										class="btn variant-filled-error"
+										on:click|stopPropagation|preventDefault={() => void movies.delete(movie.id)}
 								>
 									{#if $movies.operations[movie.id]?.type === EntityOperationType.DELETE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 										<Loading />
@@ -55,6 +65,8 @@
 										Delete
 									{/if}
 								</button>
+
+								<button type="button" class="btn variant-filled-warning">Edit</button>
 							</footer>
 						</div>
 					</a>
