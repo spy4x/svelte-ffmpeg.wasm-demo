@@ -13,6 +13,13 @@ export enum EntityOperationType {
 	DELETE = 'DELETE'
 }
 
+export enum VideoStatus {
+	IDLE = 'IDLE',
+	RECORDING = 'RECORDING',
+	PROCESSING = 'PROCESSING',
+	FINISHED = 'FINISHED'
+}
+
 export const ScenarioCreateSchema = z.object({
 	id: z.string(),
 	title: z.string(),
@@ -58,7 +65,10 @@ export const MovieCreateSchema = z.object({
 			description: z.string(),
 			url: z.string().max(400).optional(),
 			mimeType: z.enum(['video/mp4', 'video/webm']).optional(),
-			md5: z.string().min(32).max(32).optional()
+			md5: z.string().min(32).max(32).optional(),
+			format: z.enum(['mp4', 'webm']).optional(),
+			status: z.nativeEnum(VideoStatus),
+			blob: z.instanceof(Blob).optional()
 		})
 	),
 	videoURL: z.string().max(400).optional(),
