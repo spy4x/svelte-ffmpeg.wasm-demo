@@ -61,6 +61,7 @@
 			</svelte:fragment>
 			<h1 class="h2">Edit movie</h1>
 			<svelte:fragment slot="trail">
+				<button type="button" class="btn variant-filled-primary text-white">Share movie</button>
 				{#if movie.scenarioId}
 					{#if _isAdvancedMode}
 						<button on:click={() => (_isAdvancedMode = false)} class="btn variant-ghost-surface"

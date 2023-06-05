@@ -45,6 +45,9 @@
 				</a>
 			</svelte:fragment>
 			<h1 class="h2">Edit scenario</h1>
+			<svelte:fragment slot="trail">
+				<button type="button" class="btn variant-filled-primary text-white">Create movie</button>
+			</svelte:fragment>
 		</AppBar>
 
 		<form

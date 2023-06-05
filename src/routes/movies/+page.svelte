@@ -33,13 +33,15 @@
 				{#each $movies.list.data as movie}
 					<a href={`/movies/${movie.id}`} class="block">
 						<div class="card">
-							<header class="card-header">
-								<h3 class="h3">{movie.title}</h3>
-								<div class="text-xs">
-									<span class="opacity-60">Updated at:</span>
-									<span>
-										{format(new Date(movie.updatedAt), 'dd MMM h:mm aaa')}
-									</span>
+							<header class="flex gap-1 card-header">
+								<div class="truncate">
+									<h3 class="h3">{movie.title}</h3>
+									<div class="text-xs">
+										<span class="opacity-60">Updated at:</span>
+										<span>
+											{format(new Date(movie.updatedAt), 'dd MMM h:mm aaa')}
+										</span>
+									</div>
 								</div>
 							</header>
 							<section class="px-4">
@@ -63,20 +65,28 @@
 								</div>
 							</section>
 							<hr class="opacity-50" />
-							<footer class="card-footer flex justify-between p-4">
+							<footer class="card-footer flex gap-2 p-4">
 								<button
-										class="btn variant-filled-error"
+										class="btn variant-soft-surface"
 										on:click|stopPropagation|preventDefault={() => void movies.delete(movie.id)}
 								>
 									{#if $movies.operations[movie.id]?.type === EntityOperationType.DELETE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 										<Loading />
-										Deleting...
 									{:else}
-										Delete
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+										</svg>
 									{/if}
 								</button>
 
-								<button type="button" class="btn variant-filled-warning">Edit</button>
+								<button type="button" class="ml-auto btn variant-filled-warning">
+									Edit
+								</button>
+								<button type="button" class="btn variant-filled-primary">
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+									</svg>
+								</button>
 							</footer>
 						</div>
 					</a>
