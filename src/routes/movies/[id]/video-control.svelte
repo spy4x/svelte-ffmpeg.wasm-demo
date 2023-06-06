@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { type MovieCreate, VideoStatus } from '@shared';
+	import { type MovieClipVM, VideoStatus } from '@shared';
 
-	export let clip: MovieCreate['clips'][0];
+	export let clip: MovieClipVM;
 	export let index: number;
 
 	const dispatch = createEventDispatcher();
@@ -50,12 +50,27 @@
 		clip.blob = new Blob(recordedChunks, {
 			type: 'video/webm'
 		});
-		clip.url = URL.createObjectURL(clip.blob);
-		videoEl.srcObject = null;
-		videoEl.src = clip.url;
+		// clip.url = URL.createObjectURL(clip.blob);
+		// clip.base64 = (await blobToBase64(clip.blob)) || null;
+		clip.mimeType = clip.blob.type;
+		videoEl.srcObject = null; // TODO: remove this line?
+		videoEl.src = URL.createObjectURL(clip.blob);
 		clip.status = VideoStatus.FINISHED;
-
 		dispatch('recorded', { index, clip });
+	}
+	async function blobToBase64(blob: Blob): Promise<null | string> {
+		return new Promise((resolve, _) => {
+			const reader = new FileReader();
+			reader.onloadend = () => {
+				if (typeof reader.result === 'string') {
+					resolve(reader.result);
+				} else {
+					console.error('reader.result is not a string');
+					resolve(null);
+				}
+			};
+			reader.readAsDataURL(blob);
+		});
 	}
 </script>
 
@@ -91,7 +106,11 @@
 
 			{#if clip.status === VideoStatus.FINISHED}
 				<button on:click={record} class="btn variant-ghost-secondary w-48">Re-record</button>
-				<a download={index + '.' + clip.format} href={clip.url} class="btn variant-ghost-tertiary">
+				<a
+					download={index + '.' + clip.mimeType?.replace('video/', '')}
+					href={videoEl.src}
+					class="btn variant-ghost-tertiary"
+				>
 					Download
 				</a>
 			{/if}

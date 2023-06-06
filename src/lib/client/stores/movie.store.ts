@@ -1,12 +1,12 @@
-import { request, type RequestHelperError } from './helpers';
+import { request, requestNew, type RequestHelperError, requestMultipartFormData } from './helpers';
 import {
 	AsyncOperationStatus,
 	USER_ID_COOKIE_NAME,
-	type MovieCreate,
-	type MovieUpdate,
+	type MovieVM,
 	type MovieDelete,
 	type ResponseList,
-	EntityOperationType
+	EntityOperationType,
+	movieToFormData
 } from '@shared';
 import { browser } from '$app/environment';
 import type { Movie } from '@prisma/client';
@@ -16,7 +16,7 @@ import { toastStore } from '@skeletonlabs/skeleton';
 
 export interface MovieOperation {
 	type: EntityOperationType;
-	payload: MovieCreate | MovieUpdate | MovieDelete;
+	payload: MovieVM | MovieDelete;
 	status: AsyncOperationStatus;
 	error: null | RequestHelperError;
 }
@@ -104,7 +104,7 @@ export const movies = {
 			error
 		});
 	},
-	create: async (data: MovieCreate): Promise<void> => {
+	create: async (data: MovieVM): Promise<void> => {
 		const state = get(dataStore);
 		// add create operation to operations if operation with same id does not exists
 		const existingOperation = state.operations[data.id];
@@ -145,7 +145,7 @@ export const movies = {
 			});
 		}
 	},
-	update: async (data: MovieUpdate): Promise<void> => {
+	update: async (data: MovieVM): Promise<void> => {
 		const state = get(dataStore);
 		// add update operation to operations if operation with same id does not exists
 		const existingOperation = state.operations[data.id];
@@ -164,16 +164,29 @@ export const movies = {
 			error: null
 		});
 
-		const [error, movie] = await request<Movie>(`/api/movies/${data.id}`, 'PATCH', data);
+		const formData = movieToFormData(data);
+
+		const [error, movie] = await requestMultipartFormData(
+			`/api/movies/${data.id}`,
+			'PATCH',
+			formData
+		);
+
+		// const [error, movie] = await requestNew<Movie>({
+		// 	url: `/api/movies/${data.id}`,
+		// 	method: 'PATCH',
+		// 	payload: data,
+		// 	trackProgress: (progress) => console.log(progress)
+		// });
 		// update operation status
 		mutateOperation(data.id, {
 			status: movie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
 		if (movie) {
-			mutateList({
-				data: { ...state.list.data, [movie.id]: movie }
-			});
+			// mutateList({
+			// 	data: { ...state.list.data, [movie.id]: movie }
+			// });
 			toastStore.trigger({
 				message: 'Movie updated successfully',
 				background: 'variant-filled-success'
@@ -241,7 +254,7 @@ export const movies = {
 					}
 				}
 			},
-			background: "variant-filled-error"
+			background: 'variant-filled-error'
 		});
 	}
 };

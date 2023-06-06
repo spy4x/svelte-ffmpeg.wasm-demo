@@ -3,12 +3,13 @@
 	import { page } from '$app/stores';
 	import { Loading } from '@components';
 	import { createFFmpeg } from '@ffmpeg/ffmpeg';
-	import type { Movie, Scenario } from '@prisma/client';
+	import type { Scenario } from '@prisma/client';
 	import {
 		AsyncOperationStatus,
 		EntityOperationType,
-		type MovieCreate,
-		VideoStatus
+		type MovieVM,
+		VideoStatus,
+		type MovieClipVM
 	} from '@shared';
 	import { AppBar, Avatar, toastStore } from '@skeletonlabs/skeleton';
 	import { movies, scenarios } from '@stores';
@@ -16,7 +17,7 @@
 	import VideoControl from './video-control.svelte';
 
 	let id: string;
-	let movie: null | Movie;
+	let movie: null | MovieVM;
 	let scenario: null | Scenario;
 	let _isAdvancedMode = false;
 
@@ -29,7 +30,7 @@
 			const isUpdateInProgress =
 				s.operations[id]?.type === EntityOperationType.UPDATE &&
 				s.operations[id]?.status === AsyncOperationStatus.IN_PROGRESS;
-			if (s.list.status === AsyncOperationStatus.SUCCESS && !isUpdateInProgress) {
+			if (isListLoaded && !isUpdateInProgress) {
 				const sc = s.getById(id);
 				if (!sc) {
 					toastStore.trigger({
@@ -40,7 +41,12 @@
 					return;
 				}
 				const clone = structuredClone(sc);
-				movie = { ...clone, clips: clone.clips.map((c) => ({ ...c, status: VideoStatus.IDLE })) };
+				const clips: MovieClipVM[] = clone.clips.map((c) => ({
+					...(c as unknown as MovieClipVM),
+					status: VideoStatus.IDLE,
+					wasFileChanged: false
+				}));
+				movie = { ...clone, clips };
 
 				scenario = $scenarios.getById(movie.scenarioId);
 				if (!movie.scenarioId) {
@@ -51,7 +57,7 @@
 		return unsubscribe;
 	});
 
-	let finalVideo: null | MovieCreate['clips'][0] = null;
+	let finalVideo: null | MovieClipVM = null;
 	let finalVideoStatus: VideoStatus = VideoStatus.IDLE;
 	let processed = '';
 
@@ -76,7 +82,7 @@
 		let filesTxtContent = '';
 
 		for (let i = 0; i < movie.clips.length; i++) {
-			const clips = movie.clips as unknown as MovieCreate['clips'];
+			const clips = movie.clips as unknown as MovieVM['clips'];
 			const clip = clips[i];
 			const path = `${i}.webm`;
 			const data = new Uint8Array(await clip.blob!.arrayBuffer());
@@ -89,12 +95,14 @@
 		const data = ffmpeg.FS('readFile', outputFilePath);
 		const blob = new Blob([data.buffer], { type: 'video/mp4' });
 		finalVideo = {
-			id: 'Final',
-			format: 'mp4',
+			actor: null,
+			description: '',
+			mimeType: 'video/mp4',
 			blob,
 			url: URL.createObjectURL(blob),
 			status: VideoStatus.FINISHED
 		};
+		movie.videoBlob = blob;
 		finalVideoStatus = VideoStatus.FINISHED;
 	}
 </script>
@@ -187,11 +195,13 @@
 						<!-- scenes, similar to Actors, but each scene is a multiselect of actors + a text field "description" -->
 						<h4 class="h4">Clips:</h4>
 
-						{#each movie.clips as clip, i}
+						{#each movie.clips as clip, index}
 							<div
-								class="grid gap-2 {i % 2 !== 0 ? 'grid-cols-[1fr_auto]' : 'grid-cols-[auto_1fr]'}"
+								class="grid gap-2 {index % 2 !== 0
+									? 'grid-cols-[1fr_auto]'
+									: 'grid-cols-[auto_1fr]'}"
 							>
-								{#if i % 2 === 0}
+								{#if index % 2 === 0}
 									<Avatar
 										initials={clip.actor === undefined
 											? '---No actor---'
@@ -200,7 +210,7 @@
 									/>
 								{/if}
 								<div
-									class="card p-4 space-y-2 {i % 2 !== 0
+									class="card p-4 space-y-2 {index % 2 !== 0
 										? 'variant-soft-primary rounded-tr-none'
 										: 'variant-soft rounded-tl-none'}"
 								>
@@ -217,7 +227,9 @@
 												{clip.actor === undefined ? '---No actor---' : scenario?.actors[clip.actor]}
 											</p>
 										{/if}
-										<small class="opacity-50 srink-0 whitespace-nowrap pl-3">Scene #{i + 1}</small>
+										<small class="opacity-50 srink-0 whitespace-nowrap pl-3"
+											>Scene #{index + 1}</small
+										>
 									</header>
 									{#if showMoreUI}
 										<textarea
@@ -229,9 +241,9 @@
 									{:else}
 										<p>{clip.description}</p>
 									{/if}
-									<VideoControl {clip} {i} on:recorded={() => (movie.clips = movie.clips)} />
+									<VideoControl {clip} {index} on:recorded={() => (movie.clips = movie.clips)} />
 								</div>
-								{#if i % 2 !== 0}
+								{#if index % 2 !== 0}
 									<Avatar
 										initials={clip.actor === undefined
 											? '---No actor---'
@@ -244,7 +256,7 @@
 							{#if showMoreUI}
 								<div class="text-center">
 									<button
-										on:click={() => (movie.clips = movie.clips.filter((a, index) => index !== i))}
+										on:click={() => (movie.clips = movie.clips.filter((a, i) => i !== index))}
 										type="button"
 										class="btn variant-filled-error"
 									>
@@ -275,7 +287,7 @@
 							<track kind="captions" />
 						</video>
 						<a
-							download={'final.' + finalVideo.format}
+							download={'final.' + finalVideo.mimeType?.replace('video/', '')}
 							href={finalVideo.url}
 							class="btn variant-filled-primary"
 						>
