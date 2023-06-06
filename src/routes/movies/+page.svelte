@@ -22,12 +22,13 @@
 			</div>
 		{:else}
 
-			<AppBar class="w-full" background="transparent" padding="py-10 px-4">
-				<h1 class="h2 flex gap-2 items-center">
+			<AppBar class="w-full" background="transparent" padding="py-10 sm:px-4">
+				<svelte:fragment slot="lead">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
 					</svg>
-					Movies</h1>
+				</svelte:fragment>
+				<h1 class="h2">Movies</h1>
 				<svelte:fragment slot="trail">
 					<a href="/movies/new" class="ml-auto btn variant-filled-primary">Create</a>
 				</svelte:fragment>

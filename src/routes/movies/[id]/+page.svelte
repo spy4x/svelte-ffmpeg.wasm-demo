@@ -101,12 +101,12 @@
 
 <div class="container h-full mx-auto">
 	{#if movie}
-		<AppBar class="w-full" background="transparent" padding="py-10 px-4">
+		<AppBar gridColumns="grid-cols-2 sm:grid-cols-[auto_1fr_auto]" class="w-full" background="transparent" padding="py-10 sm:px-4">
 			<svelte:fragment slot="lead">
 				<a class="hover:opacity-50" href="/movies">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-12 w-12 mr-4"
+						class="h-8 w-8 mr-2 lg:h-12 lg:w-12 lg:mr-4"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -136,9 +136,9 @@
 		<form
 			data-e2e="new-movie-form"
 			on:submit|preventDefault={() => void movies.update(movie)}
-			class="grid lg:grid-cols-3 gap-12 mb-24"
+			class="grid grid-cols-1 lg:grid-cols-3 gap-y-8 lg:gap-12 mb-24"
 		>
-			<div class="card p-8 flex flex-col gap-5">
+			<div class="card p-4 lg:p-8 flex flex-col gap-5">
 				<label>
 					<span>Title</span>
 					<input bind:value={movie.title} class="input" type="text" placeholder="Enter title" />
@@ -182,7 +182,7 @@
 				</div>
 			</div>
 			<div class="col-span-2">
-				<div class="card p-8">
+				<div class="card p-4 lg:p-8">
 					<div class="flex flex-col gap-5">
 						<!-- scenes, similar to Actors, but each scene is a multiselect of actors + a text field "description" -->
 						<h4 class="h4">Clips:</h4>
@@ -196,7 +196,7 @@
 										initials={clip.actor === undefined
 											? '---No actor---'
 											: scenario?.actors[clip.actor]}
-										width="w-12"
+										width="w-8 lg:w-12"
 									/>
 								{/if}
 								<div
@@ -236,7 +236,7 @@
 										initials={clip.actor === undefined
 											? '---No actor---'
 											: scenario?.actors[clip.actor]}
-										width="w-12"
+										width="w-8 lg:w-12"
 									/>
 								{/if}
 							</div>
@@ -285,9 +285,9 @@
 				</div>
 			</div>
 
-			<div class="fixed bottom-6 inset-x-0">
-				<div class="container mx-auto grid lg:grid-cols-3 gap-12">
-					<div class="col-start-2 col-span-2">
+			<div class="fixed bottom-6 inset-x-4">
+				<div class="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+					<div class="lg:col-start-2 lg:col-span-2">
 						<div class="flex items-center px-8 py-6 variant-glass-surface rounded-3xl">
 							{#if showMoreUI}
 								<button

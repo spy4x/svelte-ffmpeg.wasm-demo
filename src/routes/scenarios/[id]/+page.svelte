@@ -36,10 +36,10 @@
 <div class="container h-full mx-auto">
 	{#if scenario}
 
-		<AppBar class="w-full" background="transparent" padding="py-10 px-4">
+		<AppBar class="w-full" background="transparent" padding="py-10 sm:px-4">
 			<svelte:fragment slot="lead">
 				<a class="hover:opacity-50" href="/scenarios">
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 lg:h-12 lg:w-12 lg:mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 					</svg>
 				</a>
@@ -53,9 +53,9 @@
 		<form
 			data-e2e="new-scenario-form"
 			on:submit|preventDefault={() => void scenarios.update(scenario)}
-			class="grid lg:grid-cols-3 gap-12"
+			class="grid grid-cols-1 lg:grid-cols-3 gap-y-8 lg:gap-12"
 		>
-			<div class="card p-8 flex flex-col gap-5">
+			<div class="card p-4 lg:p-8 flex flex-col gap-5">
 				<label>
 					<span>Title</span>
 					<input
@@ -104,12 +104,12 @@
 			</div>
 
 			<div class="col-span-2 space-y-6">
-				<div class="card p-8">
+				<div class="card p-4 lg:p-8">
 					<Stepper stepTerm="Scene">
 						{#each scenario.scenes as scene, i}
 							<Step>
 								<svelte:fragment slot="header">Scene #{i+1}</svelte:fragment>
-								<div class="my-12 flex flex-col gap-4">
+								<div class="my-8 lg:my-12 flex flex-col gap-4">
 									<label>
 										<span>Actor:</span>
 										<select bind:value={scene.actor} class="select" placeholder="Select actor(s)">

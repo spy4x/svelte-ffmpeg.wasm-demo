@@ -67,7 +67,7 @@
 				controls={clip.status === VideoStatus.FINISHED}
 				autoplay
 				muted={clip.status === VideoStatus.RECORDING}
-				class="w-full rounded border"
+				class="w-full rounded border border-dashed"
 			/>
 			{#if clip.status === VideoStatus.IDLE}
 				<div class="absolute z-10 top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4">
