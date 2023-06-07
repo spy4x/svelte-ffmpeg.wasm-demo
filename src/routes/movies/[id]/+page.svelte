@@ -275,7 +275,7 @@
 
 				<div class="my-6">
 					{#if finalVideoStatus === VideoStatus.IDLE}
-						{#if movie.clips.length >= 2 && movie.clips.every((c) => !!c.url)}
+						{#if movie.clips.length >= 2 && movie.clips.every((c) => !!c.url || c.status === VideoStatus.FINISHED)}
 							<button class="btn variant-filled-primary" on:click={merge}
 								>Merge {movie.clips.length} videos</button
 							>

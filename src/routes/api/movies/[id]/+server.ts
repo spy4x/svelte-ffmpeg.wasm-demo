@@ -32,7 +32,8 @@ async function uploadMoviePart(
 	if (signedUrlError) {
 		return { index, path: null, url: null, error: signedUrlError };
 	}
-	return { index, path, url: signedUrlData.signedUrl, error: null };
+	const url = signedUrlData.signedUrl.replace('https://ckfyxawghaorwkjjgllm.supabase.co/storage/v1/object/sign/media/','https://video-recorder-five.vercel.app/api/media/')
+	return { index, path, url, error: null };
 }
 
 export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
