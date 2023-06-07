@@ -184,9 +184,9 @@ export const movies = {
 			error
 		});
 		if (movie) {
-			// mutateList({
-			// 	data: { ...state.list.data, [movie.id]: movie }
-			// });
+			mutateList({
+				data: { ...state.list.data, [movie.id]: movie }
+			});
 			toastStore.trigger({
 				message: 'Movie updated successfully',
 				background: 'variant-filled-success'

@@ -11,6 +11,7 @@
 	let recorder: MediaRecorder;
 	let recordedChunks: Blob[] = [];
 	let videoEl: HTMLVideoElement;
+	let recordingStartedAt = 0;
 
 	onMount(() => {
 		if (clip.status === VideoStatus.IDLE && !clip.blob && clip.url) {
@@ -27,6 +28,7 @@
 			audio: true
 		});
 
+		videoEl.src = '';
 		videoEl.srcObject = stream;
 		recorder = new MediaRecorder(stream);
 		recorder.addEventListener('dataavailable', function (event) {
@@ -37,6 +39,7 @@
 
 		// Start Recording
 		recorder.start();
+		recordingStartedAt = Date.now();
 	}
 
 	async function stopRecording() {
@@ -62,6 +65,7 @@
 		videoEl.srcObject = null; // TODO: remove this line?
 		videoEl.src = URL.createObjectURL(clip.blob);
 		clip.status = VideoStatus.FINISHED;
+		clip.durationSec = recordingStartedAt ? (Date.now() - recordingStartedAt) / 1000 : 0;
 		dispatch('recorded', { index, clip });
 	}
 </script>
@@ -70,9 +74,9 @@
 	<div data-e2e="video-wrapper" class="relative">
 		<video
 			bind:this={videoEl}
-			controls={!!clip.url}
-			autoplay
-			muted={clip.status === VideoStatus.RECORDING}
+			controls={!!clip.url || clip.status === VideoStatus.FINISHED}
+			autoplay={clip.status !== VideoStatus.IDLE}
+			muted={!clip.url || clip.status === VideoStatus.RECORDING}
 			class="w-full rounded border border-dashed"
 		/>
 		{#if !clip.url && clip.status === VideoStatus.IDLE}

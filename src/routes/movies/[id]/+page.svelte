@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Loading } from '@components';
+	import { CopyLink, Loading } from '@components';
 	import { createFFmpeg } from '@ffmpeg/ffmpeg';
 	import type { Scenario } from '@prisma/client';
 	import {
@@ -22,6 +22,10 @@
 	let _isAdvancedMode = false;
 
 	$: showMoreUI = (movie && !movie.scenarioId) || _isAdvancedMode;
+	$: totalDuration = movie?.clips.reduce((acc, c) => acc + c.durationSec, 0) ?? 0;
+	$: percentageProcessed = totalDuration
+		? (((movie?.durationSec ?? 0) / totalDuration) * 100).toFixed(0)
+		: 0;
 
 	onMount(() => {
 		id = $page.params.id;
@@ -41,12 +45,17 @@
 					return;
 				}
 				const clone = structuredClone(sc);
-				const clips: MovieClipVM[] = clone.clips.map((c) => ({
-					...(c as unknown as MovieClipVM),
-					status: VideoStatus.IDLE,
-					wasFileChanged: false
-				}));
-				movie = { ...clone, clips };
+				const clips: MovieClipVM[] = clone.clips.map((c) => {
+					const mc = c as unknown as MovieClipVM;
+					return {
+						...mc,
+						actor: typeof mc.actor === 'number' ? mc.actor : null,
+						status: VideoStatus.IDLE,
+						wasFileChanged: false,
+						durationSec: mc.durationSec ?? 0
+					};
+				});
+				movie = { ...clone, clips, videoBlob: null };
 
 				scenario = $scenarios.getById(movie.scenarioId);
 				if (!movie.scenarioId) {
@@ -59,16 +68,16 @@
 
 	let finalVideo: null | MovieClipVM = null;
 	let finalVideoStatus: VideoStatus = VideoStatus.IDLE;
-	let processed = '';
 
 	async function merge() {
 		finalVideoStatus = VideoStatus.PROCESSING;
+		movie.durationSec = 0;
 		const ffmpeg = createFFmpeg({ log: true });
 		await ffmpeg.load();
 		ffmpeg.setProgress((event) => {
-			const time: string = (event as any).time;
+			const time: number = (event as any).time;
 			if (time) {
-				processed = time;
+				movie!.durationSec = time;
 			} else if (event.ratio === 1) {
 				finalVideoStatus = VideoStatus.FINISHED;
 			}
@@ -109,12 +118,8 @@
 
 <div class="container h-full mx-auto">
 	{#if movie}
-		<AppBar
-			gridColumns="grid-cols-2 sm:grid-cols-[auto_1fr_auto]"
-			class="w-full"
-			background="transparent"
-			padding="py-10 sm:px-4"
-		>
+		<!-- gridColumns="grid-cols-2 sm:grid-cols-[auto_1fr_auto]" -->
+		<AppBar class="w-full" background="transparent" padding="py-10 sm:px-4">
 			<svelte:fragment slot="lead">
 				<a class="hover:opacity-50" href="/movies">
 					<svg
@@ -131,17 +136,35 @@
 			</svelte:fragment>
 			<h1 class="h2">Edit movie</h1>
 			<svelte:fragment slot="trail">
-				<button type="button" class="btn variant-filled-primary text-white">Share movie</button>
+				{#if movie.videoURL}
+					<CopyLink url={movie.videoURL} />
+				{/if}
 				{#if movie.scenarioId}
-					{#if _isAdvancedMode}
-						<button on:click={() => (_isAdvancedMode = false)} class="btn variant-ghost-surface"
-							>Basic mode</button
+					<button
+						on:click={() => (_isAdvancedMode = !_isAdvancedMode)}
+						class="btn variant-ghost-surface"
+						title="Advanced/Basic mode"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
 						>
-					{:else}
-						<button on:click={() => (_isAdvancedMode = true)} class="btn variant-ghost-surface"
-							>Advanced mode</button
-						>
-					{/if}
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+							/>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+							/>
+						</svg>
+					</button>
 				{/if}
 			</svelte:fragment>
 		</AppBar>
@@ -208,9 +231,9 @@
 							>
 								{#if index % 2 === 0}
 									<Avatar
-										initials={clip.actor === undefined
-											? '---No actor---'
-											: scenario?.actors[clip.actor]}
+										initials={typeof clip.actor === 'number'
+											? scenario?.actors[clip.actor]
+											: '---No actor---'}
 										width="w-8 lg:w-12"
 									/>
 								{/if}
@@ -222,14 +245,16 @@
 									<header class="flex justify-between items-center">
 										{#if showMoreUI}
 											<select bind:value={clip.actor} class="select" placeholder="Select actor(s)">
-												<option value={undefined}>---No actor---</option>
+												<option value={null}>---No actor---</option>
 												{#each movie.actors as actor, ai}
 													<option value={ai}>{actor}</option>
 												{/each}
 											</select>
 										{:else}
 											<p class="font-bold">
-												{clip.actor === undefined ? '---No actor---' : scenario?.actors[clip.actor]}
+												{typeof clip.actor === 'number'
+													? scenario?.actors[clip.actor]
+													: '---No actor---'}
 											</p>
 										{/if}
 										<small class="opacity-50 srink-0 whitespace-nowrap pl-3"
@@ -273,7 +298,7 @@
 					</div>
 				</div>
 
-				<div class="my-6">
+				<div class="my-6 flex flex-col gap-5">
 					{#if finalVideoStatus === VideoStatus.IDLE}
 						{#if movie.clips.length >= 2 && movie.clips.every((c) => !!c.url || c.status === VideoStatus.FINISHED)}
 							<button class="btn variant-filled-primary" on:click={merge}
@@ -284,20 +309,35 @@
 						{/if}
 					{/if}
 					{#if finalVideoStatus === VideoStatus.PROCESSING}
-						<button class="btn variant-filled-primary">Processing {processed} seconds</button>
+						<button class="btn variant-filled-primary">
+							Processing {percentageProcessed}%
+						</button>
 					{/if}
 
-					{#if finalVideoStatus === VideoStatus.FINISHED && finalVideo}
-						<video controls src={finalVideo.url} autoplay class="rounded border">
-							<track kind="captions" />
-						</video>
-						<a
-							download={'final.' + finalVideo.mimeType?.replace('video/', '')}
-							href={finalVideo.url}
-							class="btn variant-filled-primary"
-						>
-							Download
-						</a>
+					{#if movie.videoURL || (finalVideoStatus === VideoStatus.FINISHED && finalVideo)}
+						<div data-e2e="Final video" class="card p-4 lg:p-8 flex flex-col gap-5">
+							<h4 class="h4">Compiled video</h4>
+							<video
+								controls
+								src={finalVideo?.url || movie?.videoURL}
+								autoplay={finalVideoStatus === VideoStatus.FINISHED}
+								class="rounded border"
+							>
+								<track kind="captions" />
+							</video>
+							<div class="flex gap-3">
+								<a
+									download={movie?.title + '.mp4'}
+									href={finalVideo?.url || movie?.videoURL}
+									class="btn variant-filled-primary"
+								>
+									Download
+								</a>
+								{#if movie.videoURL}
+									<CopyLink url={movie.videoURL} />
+								{/if}
+							</div>
+						</div>
 					{/if}
 				</div>
 			</div>

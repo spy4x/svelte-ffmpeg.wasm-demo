@@ -57,6 +57,7 @@ export type ScenarioDelete = string;
 export interface MovieClipModel {
 	actor: null | number;
 	description: string;
+	durationSec: number;
 	url: null | string;
 	mimeType: null | string;
 }

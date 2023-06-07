@@ -13,8 +13,11 @@ export function movieToFormData(movie: MovieCommand): FormData {
 	});
 	formData.append('clips.length', movie.clips.length.toString());
 	movie.clips.forEach((clip, index) => {
-		if (clip.actor) {
+		if (typeof clip.actor === 'number') {
 			formData.append(`clips[${index}].actor`, clip.actor.toString());
+		}
+		if (typeof clip.durationSec === 'number') {
+			formData.append(`clips[${index}].durationSec`, clip.durationSec.toString());
 		}
 		formData.append(`clips[${index}].description`, clip.description);
 		if (clip.url) {
@@ -55,12 +58,10 @@ export function formDataToMovie(formData: FormData): MovieCommand {
 	const clipCount = parseInt(formData.get('clips.length') as string, 10);
 	for (let i = 0; i < clipCount; i++) {
 		const actorStr = formData.get(`clips[${i}].actor`) as string;
-		let actor: number | null = null;
-		if (actorStr) {
-			actor = parseInt(actorStr, 10);
-		}
+		const durationSecStr = formData.get(`clips[${i}].durationSec`) as string;
 		const clip: MovieClipCommand = {
-			actor,
+			actor: actorStr ? parseInt(actorStr, 10) : null,
+			durationSec: durationSecStr ? parseInt(durationSecStr, 10) : 0,
 			description: formData.get(`clips[${i}].description`) as string,
 			url: formData.get(`clips[${i}].url`) as string,
 			mimeType: formData.get(`clips[${i}].mimeType`) as string,

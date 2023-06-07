@@ -1,3 +1,4 @@
+import { APP_URL, SUPABASE_PROJECT_URL } from '$env/static/private';
 import type { Movie } from '@prisma/client';
 import { prisma, supabase } from '@server';
 import { formDataToMovie } from '@shared';
@@ -32,7 +33,10 @@ async function uploadMoviePart(
 	if (signedUrlError) {
 		return { index, path: null, url: null, error: signedUrlError };
 	}
-	const url = signedUrlData.signedUrl.replace('https://ckfyxawghaorwkjjgllm.supabase.co/storage/v1/object/sign/media/','https://video-recorder-five.vercel.app/api/media/')
+	const url = signedUrlData.signedUrl.replace(
+		SUPABASE_PROJECT_URL + '/storage/v1/object/sign/media/',
+		APP_URL + '/api/media/'
+	);
 	return { index, path, url, error: null };
 }
 
