@@ -1,6 +1,6 @@
 import type { Prisma, Movie } from '@prisma/client';
 import { prisma } from '@server';
-import { MovieCreateSchema, type ResponseList } from '@shared';
+import type { MovieVM, ResponseList } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -31,18 +31,20 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.user) {
 		return json({ message: 'Not signed in' }, { status: 401 });
 	}
-	const payload = await request.json();
-	const parseResult = MovieCreateSchema.safeParse(payload);
-	if (!parseResult.success) {
-		return json(
-			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
-			{ status: 400 }
-		);
-	}
+	const data = await request.json();
+	// const payload = await request.json();
+	// TODO: Validation
+	// const parseResult = MovieCreateSchema.safeParse(payload);
+	// if (!parseResult.success) {
+	// 	return json(
+	// 		{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
+	// 		{ status: 400 }
+	// 	);
+	// }
 	try {
 		const movie = await prisma.movie.create({
 			data: {
-				...parseResult.data,
+				...data,
 				userId: locals.user.userId
 			}
 		});
