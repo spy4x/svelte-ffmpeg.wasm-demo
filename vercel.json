@@ -1,0 +1,8 @@
+{
+	"rewrites": [
+		{
+			"source": "/api/media/:path*",
+			"destination": "https://ckfyxawghaorwkjjgllm.supabase.co/storage/v1/object/sign/media/:path*"
+		}
+	]
+}
