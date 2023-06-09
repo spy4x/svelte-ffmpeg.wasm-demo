@@ -175,12 +175,12 @@ export const scenarios = {
 				data: { ...state.list.data, [scenario.id]: scenario }
 			});
 			toastStore.trigger({
-				message: 'Scenario updated successfully',
+				message: 'Scenario saved successfully',
 				background: 'variant-filled-success'
 			});
 		} else {
 			toastStore.trigger({
-				message: 'Scenario update failed',
+				message: 'Scenario save failed',
 				background: 'variant-filled-warning'
 			});
 		}
@@ -241,7 +241,7 @@ export const scenarios = {
 					}
 				}
 			},
-			background: "variant-filled-error"
+			background: 'variant-filled-error'
 		});
 	}
 };

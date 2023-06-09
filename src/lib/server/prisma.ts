@@ -4,6 +4,8 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaError } from 'prisma-error-enum';
 
 export class PrismaService extends PrismaClient {
+	private _isConnected = false;
+
 	constructor() {
 		super({
 			log: [
@@ -18,6 +20,16 @@ export class PrismaService extends PrismaClient {
 		if (!building) {
 			this.$connect();
 		}
+	}
+
+	async init(): Promise<void> {
+		if (this._isConnected) {
+			return;
+		}
+		console.log('Trying to connect to database...');
+		await this.$connect();
+		this._isConnected = true;
+		console.log('Connected to database');
 	}
 
 	// async onModuleInit(): Promise<void> {

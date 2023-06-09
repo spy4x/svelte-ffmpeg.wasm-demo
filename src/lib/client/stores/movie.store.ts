@@ -231,12 +231,12 @@ export const movies = {
 				data: { ...state.list.data, [movie.id]: movie }
 			});
 			toastStore.trigger({
-				message: 'Movie updated successfully',
+				message: 'Movie saved successfully',
 				background: 'variant-filled-success'
 			});
 		} else {
 			toastStore.trigger({
-				message: 'Movie update failed',
+				message: 'Movie save failed',
 				background: 'variant-filled-warning'
 			});
 		}
