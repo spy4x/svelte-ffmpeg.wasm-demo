@@ -1,18 +1,21 @@
-import { request, requestNew, type RequestHelperError, requestMultipartFormData } from './helpers';
-import {
-	AsyncOperationStatus,
-	USER_ID_COOKIE_NAME,
-	type MovieVM,
-	type MovieDelete,
-	type ResponseList,
-	EntityOperationType,
-	movieToFormData
-} from '@shared';
 import { browser } from '$app/environment';
 import type { Movie } from '@prisma/client';
+import {
+	AsyncOperationStatus,
+	EntityOperationType,
+	USER_ID_COOKIE_NAME,
+	VideoStatus,
+	movieToFormData,
+	type MovieDelete,
+	type MovieVM,
+	type ResponseList,
+	type ScenarioCreate
+} from '@shared';
+import { toastStore } from '@skeletonlabs/skeleton';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import { auth } from './auth.store';
-import { toastStore } from '@skeletonlabs/skeleton';
+import { request, requestMultipartFormData, type RequestHelperError } from './helpers';
+import { scenarios } from './scenario.store';
 
 export interface MovieOperation {
 	type: EntityOperationType;
@@ -144,6 +147,46 @@ export const movies = {
 				background: 'variant-filled-warning'
 			});
 		}
+	},
+	createFromScenario: async (
+		id: string,
+		scenarioId: null | string,
+		title?: string
+	): Promise<void> => {
+		const movie: MovieVM = {
+			id,
+			scenarioId,
+			title: title || '',
+			actors: [],
+			clips: [],
+			durationSec: 0,
+			videoBlob: null,
+			videoURL: null
+		};
+		if (scenarioId) {
+			const scenario = get(scenarios).list.data.find((s) => s.id === scenarioId);
+			if (!scenario) {
+				toastStore.trigger({
+					message: `Scenario with id ${scenarioId} not found`,
+					background: 'variant-filled-error'
+				});
+				return;
+			}
+			if (!title) {
+				movie.title = scenario.title;
+			}
+			movie.actors = scenario.actors;
+			movie.clips = (scenario.scenes as ScenarioCreate['scenes']).map((s) => ({
+				description: s.description,
+				actor: s.actor ?? null,
+				status: VideoStatus.IDLE,
+				durationSec: 0,
+				blob: null,
+				url: null,
+				mimeType: null
+			}));
+		}
+		await movies.create(movie);
 	},
 	update: async (data: MovieVM): Promise<void> => {
 		const state = get(dataStore);

@@ -32,6 +32,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		return json({ message: 'Not signed in' }, { status: 401 });
 	}
 	const data = await request.json();
+	// TODO: remove this shit below
+	delete data.videoBlob;
+	data.clips.forEach((c: any) => {
+		delete c.blob;
+		delete c.status;
+	});
 	// const payload = await request.json();
 	// TODO: Validation
 	// const parseResult = MovieCreateSchema.safeParse(payload);

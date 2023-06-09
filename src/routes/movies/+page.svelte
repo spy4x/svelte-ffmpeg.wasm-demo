@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { movies, scenarios } from '@stores';
-	import { Loading, Debug, CopyLink } from '@components';
+	import { CopyLink, Loading } from '@components';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
+	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
+	import { movies } from '@stores';
 	import { format } from 'date-fns';
-	import { AppBar, Avatar, clipboard, toastStore } from '@skeletonlabs/skeleton';
 </script>
 
 <div class="container h-full mx-auto flex flex-col items-center">
