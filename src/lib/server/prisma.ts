@@ -26,10 +26,11 @@ export class PrismaService extends PrismaClient {
 		if (this._isConnected) {
 			return;
 		}
+		const start = Date.now();
 		console.log('Trying to connect to database...');
 		await this.$connect();
 		this._isConnected = true;
-		console.log('Connected to database');
+		console.log('Connected to database. Took ' + (Date.now() - start) + 'ms');
 	}
 
 	// async onModuleInit(): Promise<void> {
