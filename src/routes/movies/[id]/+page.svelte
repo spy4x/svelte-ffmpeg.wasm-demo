@@ -288,7 +288,7 @@
 									<button
 										on:click={() => (movie.clips = movie.clips.filter((a, i) => i !== index))}
 										type="button"
-										class="btn variant-filled-error"
+										class="btn variant-soft-error"
 									>
 										Delete clip
 									</button>

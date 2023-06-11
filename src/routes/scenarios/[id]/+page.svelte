@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import { Loading } from '@components';
 	import { AsyncOperationStatus, EntityOperationType, type ScenarioUpdate } from '@shared';
-	import { AppBar, Step, Stepper, toastStore } from '@skeletonlabs/skeleton';
+	import {AppBar, Avatar, toastStore} from '@skeletonlabs/skeleton';
 	import { movies, scenarios } from '@stores';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
@@ -43,6 +43,13 @@
 		await movies.createFromScenario(creatingMovieId, scenarioId);
 		goto(`/movies/${creatingMovieId}`);
 	}
+	export const scrollEnd = () => {
+		console.log("scrollTo", document.documentElement.scrollHeight)
+		window.scrollTo({
+			top: document.documentElement.scrollHeight,
+			behavior: "smooth"
+		});
+	};
 </script>
 
 <div class="container h-full mx-auto">
@@ -104,8 +111,7 @@
 						bind:value={scenario.description}
 						class="textarea"
 						rows="5"
-						placeholder="Enter description"
-					/>
+						placeholder="Enter description"></textarea>
 				</label>
 
 				<hr class="opacity-50" />
@@ -113,20 +119,18 @@
 				<div class="flex flex-col gap-5">
 					<p>Actors</p>
 					{#each scenario.actors as actor, i}
-						<label>
-							<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
-								<div class="input-group-shim">#{i + 1}</div>
-								<input bind:value={actor} type="text" placeholder="Enter actors" />
-								<button
-									on:click={() =>
-										(scenario.actors = scenario.actors.filter((a, index) => index !== i))}
-									type="button"
-									class="variant-ghost-surface"
-								>
-									X
-								</button>
-							</div>
-						</label>
+						<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
+							<div class="input-group-shim">#{i + 1}</div>
+							<input bind:value={actor} type="text" placeholder="Enter actors" />
+							<button
+								on:click={() =>
+									(scenario.actors = scenario.actors.filter((a, index) => index !== i))}
+								type="button"
+								class="variant-ghost-surface"
+							>
+								X
+							</button>
+						</div>
 					{/each}
 					<button
 						on:click={() => (scenario.actors = [...scenario.actors, ''])}
@@ -138,43 +142,63 @@
 
 			<div class="col-span-2 space-y-6">
 				<div class="card p-4 lg:p-8">
-					<Stepper stepTerm="Scene">
+					<div class="flex flex-col gap-5">
 						{#each scenario.scenes as scene, i}
-							<Step>
-								<svelte:fragment slot="header">Scene #{i + 1}</svelte:fragment>
-								<div class="my-8 lg:my-12 flex flex-col gap-4">
-									<label>
-										<span>Actor:</span>
-										<select bind:value={scene.actor} class="select" placeholder="Select actor(s)">
-											<option value={undefined}>---No actor---</option>
-											{#each scenario.actors as actor, ai}
-												<option value={ai}>{actor}</option>
-											{/each}
-										</select>
-									</label>
-									<label>
-										<span>Description:</span>
-										<textarea
-											bind:value={scene.description}
-											class="textarea"
-											placeholder="Enter description"
-										/>
-									</label>
-
-									<div class="text-center">
-										<button
-											on:click={() =>
-												(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
-											type="button"
-											class="btn variant-filled-error"
-										>
-											Delete scene
-										</button>
-									</div>
-								</div>
-							</Step>
+							<div
+								class="grid gap-2 {i % 2 !== 0
+										? 'grid-cols-[1fr_auto]'
+										: 'grid-cols-[auto_1fr]'}"
+						>
+							{#if i % 2 === 0}
+								<Avatar
+										initials={typeof scene.actor === 'number'
+												? scenario?.actors[scene.actor]
+												: '---No actor---'}
+										width="w-8 lg:w-12"
+								/>
+							{/if}
+							<div
+									class="card p-4 space-y-2 {i % 2 !== 0
+											? 'variant-soft-primary rounded-tr-none'
+											: 'variant-soft rounded-tl-none'}"
+							>
+								<header class="flex justify-between items-center">
+									<select bind:value={scene.actor} class="select">
+										<option value={undefined}>---No actor---</option>
+										{#each scenario.actors as actor, ai}
+											<option value={ai}>{actor}</option>
+										{/each}
+									</select>
+									<small class="opacity-50 srink-0 whitespace-nowrap pl-3"
+									>Scene #{i + 1}</small
+									>
+								</header>
+								<textarea
+										bind:value={scene.description}
+										class="textarea"
+										placeholder="Enter description"></textarea>
+							</div>
+							{#if i % 2 !== 0}
+								<Avatar
+										initials={scene.actor === undefined
+												? '---No actor---'
+												: scenario?.actors[scene.actor]}
+										width="w-8 lg:w-12"
+								/>
+							{/if}
+						</div>
+							<div class="text-center">
+								<button
+										on:click={() =>
+													(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
+										type="button"
+										class="btn variant-soft-error"
+								>
+									Delete scene
+								</button>
+							</div>
 						{/each}
-					</Stepper>
+					</div>
 				</div>
 
 				<div class="card px-8 py-6 flex items-center">
@@ -183,7 +207,8 @@
 							(scenario.scenes = [
 								...scenario.scenes,
 								{ actor: scenario.actors[0], description: '' }
-							])}
+							],
+							  scrollEnd())}
 						type="button"
 						class="btn variant-filled-secondary"
 					>
