@@ -133,10 +133,9 @@
 					<span>Description</span>
 					<textarea
 						bind:value={scenario.description}
-						class="textarea min-h-[75px]"
+						class="textarea min-h-[75px] block"
 						rows="4"
-						placeholder="Enter description"
-					/>
+						placeholder="Enter description"></textarea>
 				</label>
 
 				<!-- svelte-ignore a11y-label-has-associated-control -->
@@ -206,7 +205,8 @@
 						<p class="opacity-50 text-xs pt-2 text-center">Up to 10 attachments (pdf, png, etc)</p>
 					</div>
 
-					<ol class="list flex flex-col gap-2" id="uploaded-list">
+					{#if scenario.attachments.length}
+						<ol class="list flex flex-col gap-2" id="uploaded-list">
 						{#each scenario.attachments as attachment, index}
 							<li class="flex justify-between gap-2">
 								<span>
@@ -265,6 +265,7 @@
 							</li>
 						{/each}
 					</ol>
+					{/if}
 				</div>
 			</div>
 
@@ -322,7 +323,7 @@
 									</header>
 									<textarea
 										bind:value={scene.description}
-										class="textarea min-h-[75px]"
+										class="textarea min-h-[75px] block"
 										rows="5"
 										placeholder="Enter description"
 									/>

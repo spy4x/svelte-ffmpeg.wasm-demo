@@ -195,7 +195,7 @@
 					<span>Description</span>
 					<textarea
 						bind:value={movie.description}
-						class="textarea min-h-[75px]"
+						class="textarea min-h-[75px] block"
 						rows="4"
 						placeholder="Enter description"
 					/>
@@ -378,7 +378,7 @@
 									{#if showMoreUI}
 										<textarea
 											bind:value={clip.description}
-											class="textarea"
+											class="textarea block"
 											placeholder="Enter description"
 											readonly={!showMoreUI}
 										/>

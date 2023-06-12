@@ -54,11 +54,9 @@
 										<track kind="captions" />
 									</video>
 								{:else if $scenarios.getById(movie.scenarioId)?.previewURL}
-									<img
-										src={$scenarios.getById(movie.scenarioId)?.previewURL}
-										class="rounded-t-3xl bg-black/50 w-full h-48"
-										alt={$scenarios.getById(movie.scenarioId)?.title}
-									/>
+									<div class="rounded-t-3xl w-full h-48 bg-center bg-no-repeat bg-cover
+									bg-[url('{$scenarios.getById(movie.scenarioId)?.previewURL}')]"
+									></div>
 								{:else}
 									<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">
 										<span class="opacity-60">No preview</span>

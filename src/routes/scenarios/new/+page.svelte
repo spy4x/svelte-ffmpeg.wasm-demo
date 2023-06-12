@@ -64,7 +64,7 @@
 						<span>Description</span>
 						<textarea
 							bind:value={scenario.description}
-							class="textarea"
+							class="textarea block"
 							rows="5"
 							placeholder="Enter description"
 						/>

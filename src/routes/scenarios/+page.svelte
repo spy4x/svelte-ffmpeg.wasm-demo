@@ -59,11 +59,10 @@
 						<div class="card">
 							<header>
 								{#if scenario.previewURL}
-									<img
-										src={scenario.previewURL}
-										class="rounded-t-3xl bg-black/25 w-full h-48"
-										alt={scenario.title}
-									/>
+									<div
+										class="rounded-t-3xl w-full h-48 bg-center bg-no-repeat bg-cover
+										bg-[url('{scenario.previewURL}')]"
+									></div>
 								{:else}
 									<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">
 										<span class="opacity-60">No preview</span>
