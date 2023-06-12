@@ -60,7 +60,7 @@
 								</div>
 							</header>
 							<section class="px-4">
-								<div data-e2e="actors" class="py-4 flex overflow-x-scroll gap-1">
+								<div data-e2e="actors" class="py-4 px-0.5 flex overflow-x-scroll gap-1">
 									{#if !movie.actors.length}
 										<span class="chip rounded-full p-0 pr-4 variant-soft">
 											<span
@@ -81,14 +81,14 @@
 										</span>
 									{/if}
 									{#each movie.actors as actor}
-										<span class="chip rounded-full p-0 pr-4 variant-soft">
+										{#if actor.length > 0}
 											<Avatar
-												width="w-10"
-												initials={actor}
-												background="bg-gradient-to-br variant-gradient-secondary-tertiary"
+													width="w-10"
+													initials={actor}
+													background="bg-gradient-to-br variant-gradient-secondary-tertiary"
+													class="ring-2 ring-white"
 											/>
-											<span class="ml-2">{actor}</span>
-										</span>
+										{/if}
 									{/each}
 								</div>
 							</section>
