@@ -18,6 +18,7 @@ const config = {
 			'@stores': './src/lib/client/stores',
 			'@components': './src/lib/client/components',
 			'@shared': './src/lib/shared',
+			'@client/services': './src/lib/client/services',
 			'@server': './src/lib/server'
 		}
 	}

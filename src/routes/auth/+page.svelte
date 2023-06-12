@@ -18,8 +18,8 @@
 
 	onMount(() => {
 		// subscribe to state and redirect on success as well as remove the subscription
-		const unsubscribe = auth.subscribe((state) => {
-			if (state.user) {
+		const unsubscribe = auth.onAuthStateChange((user) => {
+			if (user) {
 				goto('/scenarios');
 				setTimeout(() => unsubscribe());
 			}

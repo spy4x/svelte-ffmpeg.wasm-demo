@@ -325,17 +325,15 @@ function init() {
 	if (document.cookie.includes(USER_ID_COOKIE_NAME)) {
 		movies.fetchList();
 	}
-	let previousAuthStatus = get(auth).status;
-	auth.subscribe((authState) => {
-		if (
-			previousAuthStatus !== authState.status &&
-			authState.status === AsyncOperationStatus.SUCCESS
-		) {
-			previousAuthStatus = authState.status;
-			movies.fetchList();
-		}
-		if (previousAuthStatus !== authState.status && authState.status === AsyncOperationStatus.IDLE) {
-			previousAuthStatus = authState.status;
+
+	auth.onAuthStateChange((user) => {
+		if (user) {
+			const state = get(movies);
+			if (state.list.status === AsyncOperationStatus.IDLE) {
+				// to avoid double fetch
+				movies.fetchList();
+			}
+		} else {
 			mutate(initialValue);
 		}
 	});

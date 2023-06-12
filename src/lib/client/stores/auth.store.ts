@@ -3,6 +3,7 @@ import type { AuthUser } from '@prisma/client';
 import { request, type RequestHelperError } from './helpers';
 import { AsyncOperationStatus, USER_ID_COOKIE_NAME } from '@shared';
 import { browser } from '$app/environment';
+import { get } from 'svelte/store';
 
 export enum AuthOperation {
 	SIGN_IN = 'SIGN_IN',
@@ -10,7 +11,8 @@ export enum AuthOperation {
 	SIGN_OUT = 'SIGN_OUT',
 	FETCH_ME = 'FETCH_ME',
 	GOOGLE = 'GOOGLE',
-	FACEBOOK = 'FACEBOOK'
+	FACEBOOK = 'FACEBOOK',
+	DELETE = 'DELETE'
 }
 
 interface State {
@@ -32,8 +34,21 @@ const LOCAL_STORAGE_KEY = 'auth';
 const store = localStorageStore<State>(LOCAL_STORAGE_KEY, initialValue);
 
 function mutate(state: Partial<State>) {
-	store.update((s) => ({ ...s, ...state }));
+	const prevState = get(store);
+	const nextState = { ...prevState, ...state };
+	store.set(nextState);
+
+	if (typeof state.user !== 'undefined') {
+		// if user changed
+		const wasUserAuthenticated = prevState.user !== null;
+		const isUserAuthenticated = state.user !== null;
+		if (wasUserAuthenticated !== isUserAuthenticated) {
+			onAuthStateChangeSubscribers.forEach((subscriber) => subscriber(nextState.user));
+		}
+	}
 }
+
+const onAuthStateChangeSubscribers: Array<(user: null | AuthUser) => void> = [];
 
 export const auth = {
 	subscribe: store.subscribe,
@@ -96,6 +111,31 @@ export const auth = {
 	},
 	oauth: (provider: AuthOperation.GOOGLE | AuthOperation.FACEBOOK): void => {
 		mutate({ status: AsyncOperationStatus.IN_PROGRESS, error: null, operation: provider });
+	},
+	delete: async (): Promise<boolean> => {
+		mutate({
+			status: AsyncOperationStatus.IN_PROGRESS,
+			error: null,
+			operation: AuthOperation.DELETE
+		});
+		const [error] = await request<void>('/api/users/me', 'DELETE');
+		if (error) {
+			mutate({ status: AsyncOperationStatus.ERROR, error });
+			return false;
+		} else {
+			mutate(initialValue);
+			return true;
+		}
+	},
+	onAuthStateChange: (cb: (user: null | AuthUser) => void): ()=>void => {
+		onAuthStateChangeSubscribers.push(cb);
+		return () => {
+			// unsubscribe
+			const index = onAuthStateChangeSubscribers.indexOf(cb);
+			if (index !== -1) {
+				onAuthStateChangeSubscribers.splice(index, 1);
+			}
+		}
 	},
 	signInWithGoogleURL: '/api/users/google',
 	signInWithFacebookURL: '/api/users/facebook'

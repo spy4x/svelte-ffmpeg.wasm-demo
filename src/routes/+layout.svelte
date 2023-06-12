@@ -5,17 +5,27 @@
 	import '@skeletonlabs/skeleton/styles/skeleton.css';
 	// Most of your app wide CSS should be put in this file
 	import '../app.postcss';
-	import { AppShell, AppBar, Toast } from '@skeletonlabs/skeleton';
+	import { AppShell, AppBar, Toast, type PopupSettings, popup } from '@skeletonlabs/skeleton';
 	import { AuthOperation, auth } from '@stores';
 	import { Loading } from '@components';
 	import { goto } from '$app/navigation';
 	import { AsyncOperationStatus } from '@shared';
 	import { page } from '$app/stores';
+	import { initPopups } from '@client/services';
+
+	initPopups();
 
 	async function signOut() {
 		await auth.signOut();
-		goto('/');
+		goto('/auth');
 	}
+
+	const userProfileDropdown: PopupSettings = {
+		event: 'focus-click',
+		target: 'userProfileDropdown',
+		placement: 'bottom',
+		closeQuery: 'li'
+	};
 </script>
 
 <!-- App Shell -->
@@ -45,16 +55,49 @@
 						>
 							Movies
 						</a>
-						<button class="btn btn-sm variant-ghost-secondary" on:click={signOut}>
+						<button
+							class="btn-icon btn-sm variant-ghost-secondary"
+							use:popup={userProfileDropdown}
+							type="button"
+						>
 							{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
-								<Loading /> Processing...
+								<Loading isIcon={true} />
+							{:else if $auth.user.photoURL}
+								<img src={$auth.user.photoURL} class="w-6 h-6 rounded-full" alt="avatar" />
 							{:else}
-								{#if $auth.user.photoURL}
-									<img src={$auth.user.photoURL} class="w-6 h-6 rounded-full mr-2" alt="avatar" />
-								{/if}
-								Sign out
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke-width="1.5"
+									stroke="currentColor"
+									class="w-6 h-6"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+									/>
+								</svg>
 							{/if}
 						</button>
+						<nav class="list-nav card shadow-xl p-4" data-popup="userProfileDropdown">
+							<ul>
+								<li class="listbox-item">
+									<a href="/profile"> Profile </a>
+								</li>
+								<hr class="opacity-50" />
+								<li class="listbox-item">
+									<button on:click={signOut} type="button">
+										{#if $auth.status === AsyncOperationStatus.IN_PROGRESS && ($auth.operation === AuthOperation.SIGN_OUT || $auth.operation === AuthOperation.FETCH_ME)}
+											<Loading /> Processing...
+										{:else}
+											Sign out
+										{/if}
+									</button>
+								</li>
+							</ul>
+						</nav>
 					</div>
 				{:else}
 					<a class="btn btn-sm variant-ghost-primary" href="/auth"> Sign in / up </a>

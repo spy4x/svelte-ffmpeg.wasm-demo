@@ -8,7 +8,7 @@ export function createStoreMutator<T>(store: Writable<T>) {
 
 export interface RequestHelperError {
 	status: number;
-	body: unknown;
+	body: {message?: string};
 }
 
 export async function request<T>(
