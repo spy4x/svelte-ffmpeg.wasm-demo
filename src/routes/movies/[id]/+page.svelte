@@ -11,7 +11,7 @@
 		VideoStatus,
 		type MovieClipVM
 	} from '@shared';
-	import { AppBar, Avatar, toastStore } from '@skeletonlabs/skeleton';
+	import {AppBar, Avatar, toastStore} from '@skeletonlabs/skeleton';
 	import { movies, scenarios } from '@stores';
 	import { onMount } from 'svelte';
 	import VideoControl from './video-control.svelte';
