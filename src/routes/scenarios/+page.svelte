@@ -60,8 +60,8 @@
 							<header>
 								{#if scenario.previewURL}
 									<div
-										class="rounded-t-3xl w-full h-48 bg-center bg-no-repeat bg-cover
-										bg-[url('{scenario.previewURL}')]"
+										class="rounded-t-3xl w-full h-48 bg-center bg-no-repeat bg-cover"
+										style="background-image: url('{scenario.previewURL}')"
 									></div>
 								{:else}
 									<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">
