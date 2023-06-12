@@ -39,7 +39,7 @@ interface ViewState {
 		error: null | RequestHelperError;
 	};
 	operations: { [id: string]: ScenarioOperation };
-	getById: (id: string) => null | Scenario;
+	getById: (id: null | string) => null | Scenario;
 	getOperationById: (id: string) => null | ScenarioOperation;
 }
 
@@ -82,7 +82,7 @@ const viewStore = derived<Writable<DataState>, ViewState>(dataStore, (state) => 
 		error: state.list.error
 	},
 	operations: state.operations,
-	getById: (id: string) => state.list.data[id],
+	getById: (id: null | string) => state.list.data[id] || null,
 	getOperationById: (id: string) => state.operations[id]
 }));
 

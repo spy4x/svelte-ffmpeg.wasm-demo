@@ -66,7 +66,7 @@
 				<a class="hover:opacity-50" href="/scenarios">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-8 w-8 mr-2 lg:h-12 lg:w-12 lg:mr-4"
+						class="h-8 w-8"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -164,8 +164,7 @@
 											width="w-8 lg:w-12"
 										/>
 										<button
-											on:click={() =>
-												(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
+											on:click={() => deleteScene(i)}
 											type="button"
 											class="btn-icon variant-soft-surface"
 											title="Delete scene"

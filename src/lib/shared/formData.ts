@@ -4,6 +4,7 @@ export function movieToFormData(movie: MovieCommand): FormData {
 	const formData = new FormData();
 	formData.append('id', movie.id);
 	formData.append('title', movie.title);
+	formData.append('description', movie.description);
 	if (movie.scenarioId) {
 		formData.append('scenarioId', movie.scenarioId);
 	}
@@ -44,6 +45,7 @@ export function formDataToMovie(formData: FormData): MovieCommand {
 	const movie: MovieCommand = {
 		id: formData.get('id') as string,
 		title: formData.get('title') as string,
+		description: formData.get('description') as string,
 		scenarioId: formData.get('scenarioId') as string,
 		actors: [],
 		clips: [],

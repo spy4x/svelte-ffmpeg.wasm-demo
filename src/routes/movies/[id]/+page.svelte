@@ -17,7 +17,7 @@
 	import VideoControl from './video-control.svelte';
 
 	let id: string;
-	let movie: null | MovieVM;
+	let movie: MovieVM;
 	let scenario: null | Scenario;
 	let _isAdvancedMode = false;
 
@@ -26,6 +26,7 @@
 	$: percentageProcessed = totalDuration
 		? (((movie?.durationSec ?? 0) / totalDuration) * 100).toFixed(0)
 		: 0;
+	$: videoURL = finalVideo?.url ?? movie?.videoURL ?? '';
 
 	onMount(() => {
 		id = $page.params.id;
@@ -109,22 +110,26 @@
 			mimeType: 'video/mp4',
 			blob,
 			url: URL.createObjectURL(blob),
-			status: VideoStatus.FINISHED
+			status: VideoStatus.FINISHED,
+			durationSec: movie?.durationSec
 		};
 		movie.videoBlob = blob;
 		finalVideoStatus = VideoStatus.FINISHED;
+	}
+
+	function deleteClip(index: number): void {
+		movie.clips = movie.clips.filter((_, i) => i !== index);
 	}
 </script>
 
 <div class="container h-full mx-auto">
 	{#if movie}
-		<!-- gridColumns="grid-cols-2 sm:grid-cols-[auto_1fr_auto]" -->
 		<AppBar class="w-full" background="transparent" padding="py-10 sm:px-4">
 			<svelte:fragment slot="lead">
 				<a class="hover:opacity-50" href="/movies">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-8 w-8 mr-2 lg:h-12 lg:w-12 lg:mr-4"
+						class="h-8 w-8"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -137,7 +142,11 @@
 			<h1 class="h2">Edit movie</h1>
 			<svelte:fragment slot="trail">
 				{#if movie.videoURL}
-					<CopyLink url={movie.videoURL} />
+					<CopyLink
+						url={movie.videoURL}
+						background="variant-ghost-tertiary"
+						toastBackground="variant-soft-tertiary"
+					/>
 				{/if}
 				{#if movie.scenarioId}
 					<button
@@ -180,6 +189,16 @@
 					<input bind:value={movie.title} class="input" type="text" placeholder="Enter title" />
 				</label>
 
+				<label>
+					<span>Description</span>
+					<textarea
+						bind:value={movie.description}
+						class="textarea min-h-[75px]"
+						rows="4"
+						placeholder="Enter description"
+					/>
+				</label>
+
 				<hr class="opacity-50" />
 
 				<div class="flex flex-col gap-5">
@@ -216,11 +235,79 @@
 						</button>
 					{/if}
 				</div>
+
+				<div class="flex flex-col gap-5">
+					{#if videoURL}
+						<hr class="opacity-50" />
+						<div data-e2e="Final video" class="flex flex-col gap-5">
+							<h4 class="h4">Completed video</h4>
+							<video
+								controls
+								src={videoURL}
+								autoplay={finalVideoStatus === VideoStatus.FINISHED}
+								class="rounded-lg"
+							>
+								<track kind="captions" />
+							</video>
+							<div class="flex gap-3">
+								<a
+									download={movie?.title + '.mp4'}
+									href={videoURL}
+									class="btn variant-soft-surface"
+									title="Download movie"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-6 w-6"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+										/>
+									</svg>
+								</a>
+								{#if movie.videoURL}
+									<CopyLink
+										url={movie.videoURL}
+										background="variant-soft-tertiary"
+										text="Copy link"
+									/>
+								{/if}
+							</div>
+						</div>
+					{/if}
+
+					{#if finalVideoStatus === VideoStatus.IDLE}
+						<hr class="opacity-50" />
+						{#if movie.clips.length >= 2 && movie.clips.every((c) => !!c.url || c.status === VideoStatus.FINISHED)}
+							<button class="btn variant-filled-primary" on:click={merge}>
+								{#if videoURL}
+									Re-merge movie
+								{:else}
+									Merge clips into movie
+								{/if}
+							</button>
+						{:else}
+							<p class="text-center text-surface-300">Add at least 2 videos to merge</p>
+						{/if}
+					{/if}
+					{#if finalVideoStatus === VideoStatus.PROCESSING}
+						<hr class="opacity-50" />
+						<button class="btn variant-filled-primary">
+							Processing {percentageProcessed}%
+						</button>
+					{/if}
+				</div>
 			</div>
+
 			<div class="col-span-2">
 				<div class="card p-4 lg:p-8">
 					<div class="flex flex-col gap-5">
-						<!-- scenes, similar to Actors, but each scene is a multiselect of actors + a text field "description" -->
 						<h4 class="h4">Clips:</h4>
 
 						{#each movie.clips as clip, index}
@@ -230,12 +317,37 @@
 									: 'grid-cols-[auto_1fr]'}"
 							>
 								{#if index % 2 === 0}
-									<Avatar
-										initials={typeof clip.actor === 'number'
-											? scenario?.actors[clip.actor]
-											: '---No actor---'}
-										width="w-8 lg:w-12"
-									/>
+									<div class="flex flex-col gap-3 items-center">
+										<Avatar
+											initials={typeof clip.actor === 'number'
+												? scenario?.actors[clip.actor]
+												: '---No actor---'}
+											width="w-8 lg:w-12"
+										/>
+										{#if showMoreUI}
+											<button
+												on:click={() => deleteClip(index)}
+												type="button"
+												class="btn-icon variant-soft-surface"
+												title="Delete clip"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="h-6 w-6"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													stroke-width="2"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+													/>
+												</svg>
+											</button>
+										{/if}
+									</div>
 								{/if}
 								<div
 									class="card p-4 space-y-2 {index % 2 !== 0
@@ -274,71 +386,41 @@
 									<VideoControl {clip} {index} on:recorded={() => (movie.clips = movie.clips)} />
 								</div>
 								{#if index % 2 !== 0}
-									<Avatar
-										initials={clip.actor === undefined
-											? '---No actor---'
-											: scenario?.actors[clip.actor]}
-										width="w-8 lg:w-12"
-									/>
+									<div class="flex flex-col gap-3 items-center">
+										<Avatar
+											initials={typeof clip.actor === 'number'
+												? scenario?.actors[clip.actor]
+												: '---No actor---'}
+											width="w-8 lg:w-12"
+										/>
+										{#if showMoreUI}
+											<button
+												on:click={() => deleteClip(index)}
+												type="button"
+												class="btn-icon variant-soft-surface"
+												title="Delete clip"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="h-6 w-6"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													stroke-width="2"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+													/>
+												</svg>
+											</button>
+										{/if}
+									</div>
 								{/if}
 							</div>
-
-							{#if showMoreUI}
-								<div class="text-center">
-									<button
-										on:click={() => (movie.clips = movie.clips.filter((a, i) => i !== index))}
-										type="button"
-										class="btn variant-soft-error"
-									>
-										Delete clip
-									</button>
-								</div>
-							{/if}
 						{/each}
 					</div>
-				</div>
-
-				<div class="my-6 flex flex-col gap-5">
-					{#if finalVideoStatus === VideoStatus.IDLE}
-						{#if movie.clips.length >= 2 && movie.clips.every((c) => !!c.url || c.status === VideoStatus.FINISHED)}
-							<button class="btn variant-filled-primary" on:click={merge}
-								>Merge {movie.clips.length} videos</button
-							>
-						{:else}
-							<p class="text-center text-surface-300">Add at least 2 videos to merge</p>
-						{/if}
-					{/if}
-					{#if finalVideoStatus === VideoStatus.PROCESSING}
-						<button class="btn variant-filled-primary">
-							Processing {percentageProcessed}%
-						</button>
-					{/if}
-
-					{#if movie.videoURL || (finalVideoStatus === VideoStatus.FINISHED && finalVideo)}
-						<div data-e2e="Final video" class="card p-4 lg:p-8 flex flex-col gap-5">
-							<h4 class="h4">Compiled video</h4>
-							<video
-								controls
-								src={finalVideo?.url || movie?.videoURL}
-								autoplay={finalVideoStatus === VideoStatus.FINISHED}
-								class="rounded border"
-							>
-								<track kind="captions" />
-							</video>
-							<div class="flex gap-3">
-								<a
-									download={movie?.title + '.mp4'}
-									href={finalVideo?.url || movie?.videoURL}
-									class="btn variant-filled-primary"
-								>
-									Download
-								</a>
-								{#if movie.videoURL}
-									<CopyLink url={movie.videoURL} />
-								{/if}
-							</div>
-						</div>
-					{/if}
 				</div>
 			</div>
 
@@ -372,9 +454,6 @@
 					</div>
 				</div>
 			</div>
-
-			<!-- <Debug data={movie} />
-			<Debug data={$movies} /> -->
 		</form>
 	{:else if $movies.list.status === AsyncOperationStatus.IN_PROGRESS}
 		<Loading />

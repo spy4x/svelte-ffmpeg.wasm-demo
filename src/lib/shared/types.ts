@@ -65,6 +65,7 @@ export interface MovieClipModel {
 export interface MovieModel {
 	id: string;
 	title: string;
+	description: string;
 	scenarioId: null | string;
 	actors: string[];
 	clips: MovieClipModel[];

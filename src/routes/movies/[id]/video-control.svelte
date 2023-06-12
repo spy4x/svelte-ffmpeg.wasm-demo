@@ -59,10 +59,8 @@
 		clip.blob = new Blob(recordedChunks, {
 			type: 'video/webm'
 		});
-		// clip.url = URL.createObjectURL(clip.blob);
-		// clip.base64 = (await blobToBase64(clip.blob)) || null;
 		clip.mimeType = clip.blob.type;
-		videoEl.srcObject = null; // TODO: remove this line?
+		videoEl.srcObject = null;
 		videoEl.src = URL.createObjectURL(clip.blob);
 		clip.status = VideoStatus.FINISHED;
 		clip.durationSec = recordingStartedAt ? (Date.now() - recordingStartedAt) / 1000 : 0;
@@ -70,14 +68,14 @@
 	}
 </script>
 
-<div class="flex flex-col gap-2 rounded bg-slate-800 p-4">
+<div class="flex flex-col gap-2 rounded-lg">
 	<div data-e2e="video-wrapper" class="relative">
 		<video
 			bind:this={videoEl}
 			controls={!!clip.url || clip.status === VideoStatus.FINISHED}
 			autoplay={clip.status !== VideoStatus.IDLE}
 			muted={!clip.url || clip.status === VideoStatus.RECORDING}
-			class="w-full rounded border border-dashed"
+			class="w-full rounded"
 		/>
 		{#if !clip.url && clip.status === VideoStatus.IDLE}
 			<div class="absolute z-10 top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4">
@@ -88,7 +86,7 @@
 
 	<div class="flex gap-2">
 		{#if clip.url && clip.status === VideoStatus.IDLE}
-			<button on:click={record} class="btn variant-filled-primary w-48"> Start recording </button>
+			<button on:click={record} class="btn variant-filled-secondary w-48"> Re-record </button>
 		{/if}
 		{#if clip.status === VideoStatus.RECORDING}
 			<button on:click={stopRecording} class="btn variant-filled-warning w-48">
@@ -101,11 +99,11 @@
 		{/if}
 
 		{#if clip.status === VideoStatus.FINISHED}
-			<button on:click={record} class="btn variant-ghost-secondary w-48">Re-record</button>
+			<button on:click={record} class="btn variant-soft-primary w-48">Re-record</button>
 			<a
 				download={index + '.' + clip.mimeType?.replace('video/', '')}
 				href={videoEl.src}
-				class="btn variant-ghost-tertiary"
+				class="btn variant-soft-surface"
 			>
 				Download
 			</a>

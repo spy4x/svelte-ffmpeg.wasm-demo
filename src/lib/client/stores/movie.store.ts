@@ -157,6 +157,7 @@ export const movies = {
 			id,
 			scenarioId,
 			title: title || '',
+			description: '',
 			actors: [],
 			clips: [],
 			durationSec: 0,
@@ -175,6 +176,9 @@ export const movies = {
 			if (!title) {
 				movie.title = scenario.title;
 			}
+			if (!movie.description) {
+				movie.description = scenario.description;
+			}
 			movie.actors = scenario.actors;
 			movie.clips = (scenario.scenes as ScenarioCreate['scenes']).map((s) => ({
 				description: s.description,
@@ -185,6 +189,17 @@ export const movies = {
 				url: null,
 				mimeType: null
 			}));
+		}
+		if (!movie.clips.length) {
+			movie.clips.push({
+				description: '',
+				actor: null,
+				status: VideoStatus.IDLE,
+				durationSec: 0,
+				blob: null,
+				url: null,
+				mimeType: null
+			});
 		}
 		await movies.create(movie);
 	},
