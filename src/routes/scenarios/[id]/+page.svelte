@@ -116,8 +116,8 @@
 					<span>Description</span>
 					<textarea
 						bind:value={scenario.description}
-						class="textarea min-h-[100px]"
-						rows="5"
+						class="textarea min-h-[75px]"
+						rows="4"
 						placeholder="Enter description"
 					/>
 				</label>
@@ -203,7 +203,7 @@
 									</header>
 									<textarea
 										bind:value={scene.description}
-										class="textarea min-h-[100px]"
+										class="textarea min-h-[75px]"
 										rows="5"
 										placeholder="Enter description"
 									/>
