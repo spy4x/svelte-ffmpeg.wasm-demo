@@ -322,7 +322,7 @@
 											initials={typeof clip.actor === 'number'
 												? scenario?.actors[clip.actor]
 												: '---No actor---'}
-											width="w-8 lg:w-12"
+											width="w-9 lg:w-12"
 										/>
 										{#if showMoreUI}
 											<button
@@ -391,7 +391,7 @@
 											initials={typeof clip.actor === 'number'
 												? scenario?.actors[clip.actor]
 												: '---No actor---'}
-											width="w-8 lg:w-12"
+											width="w-9 lg:w-12"
 										/>
 										{#if showMoreUI}
 											<button

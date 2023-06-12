@@ -161,12 +161,12 @@
 											initials={typeof scene.actor === 'number'
 												? scenario?.actors[scene.actor]
 												: '---No actor---'}
-											width="w-8 lg:w-12"
+											width="w-9 lg:w-12"
 										/>
 										<button
 											on:click={() => deleteScene(i)}
 											type="button"
-											class="btn-icon variant-soft-surface"
+											class="btn-icon variant-soft-surface w-9 lg:w-12"
 											title="Delete scene"
 										>
 											<svg
@@ -204,8 +204,7 @@
 										bind:value={scene.description}
 										class="textarea min-h-[75px]"
 										rows="5"
-										placeholder="Enter description"
-									/>
+										placeholder="Enter description"></textarea>
 								</div>
 								{#if i % 2 !== 0}
 									<div class="flex flex-col gap-3 items-center">
@@ -213,12 +212,12 @@
 											initials={typeof scene.actor === 'number'
 												? scenario?.actors[scene.actor]
 												: '---No actor---'}
-											width="w-8 lg:w-12"
+											width="w-9 lg:w-12"
 										/>
 										<button
 											on:click={() => deleteScene(i)}
 											type="button"
-											class="btn-icon variant-soft-surface"
+											class="btn-icon variant-soft-surface w-9 lg:w-12"
 											title="Delete scene"
 										>
 											<svg

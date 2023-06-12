@@ -57,7 +57,13 @@
 				{#each $scenarios.list.data as scenario}
 					<a href={`/scenarios/${scenario.id}`} class="block">
 						<div class="card">
-							<header class="flex gap-1 card-header">
+							<header>
+								<img src="/img/img.png" class="rounded-t-3xl bg-black/50 w-full h-48" alt="{scenario.title}">
+<!--								<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">-->
+<!--									<span class="opacity-60">No preview</span>-->
+<!--								</div>-->
+							</header>
+							<div class="flex gap-1 p-4 space-y-4">
 								<div class="truncate">
 									<h3 class="h3">{scenario.title}</h3>
 									<div class="text-xs">
@@ -67,7 +73,7 @@
 										</span>
 									</div>
 								</div>
-							</header>
+							</div>
 							<section class="px-4">
 								<div data-e2e="actors" class="py-4 px-0.5 isolate flex -space-x-2 overflow-hidden">
 									{#if !scenario.actors.length}
