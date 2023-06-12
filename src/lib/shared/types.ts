@@ -24,26 +24,21 @@ export const ScenarioCreateSchema = z.object({
 	id: z.string(),
 	title: z.string(),
 	description: z.string(),
+	previewURL: z.string().max(400).nullable().optional(),
+	previewFile: z.instanceof(File).nullable().optional(),
 	attachments: z.array(
 		z.object({
-			title: z.string(),
-			url: z.string(),
-			mimeType: z.enum([
-				'image/png',
-				'image/jpeg',
-				'application/pdf',
-				'video/mp4',
-				'image/webp',
-				'video/webm'
-			]),
-			md5: z.string()
+			id: z.string().min(15).max(15),
+			title: z.string().max(50),
+			url: z.string().nullable().optional(),
+			file: z.instanceof(File).nullable().optional()
 		})
 	),
 	actors: z.array(z.string()),
 	scenes: z.array(
 		z.object({
 			description: z.string(),
-			actor: z.number().optional()
+			actor: z.number().optional().nullable()
 		})
 	)
 });

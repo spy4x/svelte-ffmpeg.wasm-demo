@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Loading } from '@components';
+	import { Debug, Loading } from '@components';
 	import { AsyncOperationStatus, EntityOperationType, type ScenarioUpdate } from '@shared';
-	import {AppBar, Avatar, FileButton, toastStore} from '@skeletonlabs/skeleton';
+	import { AppBar, Avatar, FileButton, toastStore } from '@skeletonlabs/skeleton';
 	import { movies, scenarios } from '@stores';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
@@ -12,8 +12,6 @@
 	let scenario: ScenarioUpdate;
 	let creatingMovieId = '';
 	let addSceneButton: HTMLButtonElement;
-
-	let files: FileList;
 
 	onMount(() => {
 		id = $page.params.id;
@@ -58,6 +56,21 @@
 
 	function deleteScene(index: number): void {
 		scenario.scenes = scenario.scenes.filter((a, i) => index !== i);
+	}
+
+	function handleAttachments(e: Event): void {
+		const target = e.target as HTMLInputElement;
+		if (!target.files) {
+			return;
+		}
+		const files = Array.from(target.files).map((file) => ({
+			id: generateRandomString(15),
+			title: file.name,
+			url: null,
+			file
+		}));
+		scenario.attachments = [...scenario.attachments, ...files];
+		target.value = '';
 	}
 </script>
 
@@ -124,6 +137,32 @@
 					/>
 				</label>
 
+				<!-- svelte-ignore a11y-label-has-associated-control -->
+				<label>
+					<span>Preview</span>
+					{#if scenario.previewFile || scenario.previewURL}
+						<img
+							class="w-full my-3 rounded-lg"
+							src={scenario.previewFile
+								? URL.createObjectURL(scenario.previewFile)
+								: scenario.previewURL}
+							alt="preview"
+						/>
+					{/if}
+					<FileButton
+						name="previewFile"
+						accept="image/png,image/jpeg,image/svg+xml"
+						button="variant-ghost-surface w-full"
+						on:change={(e) => (scenario.previewFile = e.target.files[0])}
+					>
+						{#if scenario.previewURL || scenario.previewFile}
+							Change Image
+						{:else}
+							Upload Image
+						{/if}
+					</FileButton>
+				</label>
+
 				<hr class="opacity-50" />
 
 				<div class="flex flex-col gap-5">
@@ -154,61 +193,75 @@
 				<div class="flex flex-col gap-5">
 					<p>Attachments</p>
 					<div>
-						<FileButton button="variant-ghost-surface" multiple name="files" width="w-full">Upload scenario attachments</FileButton>
-						<p class="opacity-50 text-xs pt-2 text-center">Up to 10 attachments (png, pdf, etc)</p>
+						<FileButton
+							button="variant-ghost-surface w-full"
+							multiple
+							name="attachments"
+							on:change={handleAttachments}
+						>
+							Upload attachments
+						</FileButton>
+						<p class="opacity-50 text-xs pt-2 text-center">Up to 10 attachments (pdf, png, etc)</p>
 					</div>
 
-					<ol class="list-inside flex flex-col gap-2" id="uploaded-list">
-						<li class="flex items-start gap-2">
-							<span>1.</span>
-							<span>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iste, perspiciatis!</span>
+					<ol class="list flex flex-col gap-2" id="uploaded-list">
+						{#each scenario.attachments as attachment, index}
+							<li class="flex justify-between gap-2">
+								<span>
+									{index + 1}. {attachment.title}
+								</span>
 
-							<button
-									type="button"
-									class="ml-auto shrink-0 opacity-80 hover:opacity-100"
-									title="Delete scene"
-							>
-								<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-6 w-6"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										stroke-width="2"
-								>
-									<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-									/>
-								</svg>
-							</button>
-						</li>
-						<li class="flex items-start gap-2">
-							<span>2.</span>
-							<span>Lorem ipsum!</span>
+								<span class="flex">
+									{#if attachment.url}
+										<!-- download attachment button (a href) -->
+										<a
+											download={attachment.title}
+											href={attachment.url}
+											class="ml-auto shrink-0 opacity-80 hover:opacity-100"
+											title="Download attachment"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-6 w-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+												/>
+											</svg>
+										</a>
+									{/if}
 
-							<button
-									type="button"
-									class="ml-auto shrink-0 opacity-80 hover:opacity-100"
-									title="Delete scene"
-							>
-								<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-6 w-6"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										stroke-width="2"
-								>
-									<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-									/>
-								</svg>
-							</button>
-						</li>
+									<button
+										on:click={() =>
+											(scenario.attachments = scenario.attachments.filter((a, i) => i !== index))}
+										type="button"
+										class="ml-auto shrink-0 opacity-80 hover:opacity-100"
+										title="Delete attachment"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-6 w-6"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											stroke-width="2"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+											/>
+										</svg>
+									</button>
+								</span>
+							</li>
+						{/each}
 					</ol>
 				</div>
 			</div>
@@ -269,7 +322,8 @@
 										bind:value={scene.description}
 										class="textarea min-h-[75px]"
 										rows="5"
-										placeholder="Enter description"></textarea>
+										placeholder="Enter description"
+									/>
 								</div>
 								{#if i % 2 !== 0}
 									<div class="flex flex-col gap-3 items-center">

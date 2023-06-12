@@ -60,6 +60,7 @@ model Scenario {
   userId      String?  @map("user_id") @db.VarChar(15)
   title       String   @default("Untitled") @db.VarChar(100)
   description String   @default("") @db.VarChar(1000)
+  previewURL  String?  @map("preview_url") @db.VarChar(400)
   attachments Json[]   @default([]) @db.JsonB
   actors      String[] @db.VarChar(100)
   scenes      Json[]   @default([]) @db.JsonB

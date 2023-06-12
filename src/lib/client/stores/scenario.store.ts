@@ -1,4 +1,4 @@
-import { request, type RequestHelperError } from './helpers';
+import { request, requestMultipartFormData, type RequestHelperError } from './helpers';
 import {
 	AsyncOperationStatus,
 	USER_ID_COOKIE_NAME,
@@ -6,7 +6,8 @@ import {
 	type ScenarioUpdate,
 	type ScenarioDelete,
 	type ResponseList,
-	EntityOperationType
+	EntityOperationType,
+	scenarioToFormData
 } from '@shared';
 import { browser } from '$app/environment';
 import type { Scenario } from '@prisma/client';
@@ -24,7 +25,7 @@ export interface ScenarioOperation {
 interface DataState {
 	list: {
 		ids: string[];
-		data: { [id: string]: Scenario };
+		data: { [id: string]: ScenarioUpdate };
 		total: number;
 		perPage: number;
 		status: AsyncOperationStatus;
@@ -34,7 +35,7 @@ interface DataState {
 }
 interface ViewState {
 	list: {
-		data: Scenario[];
+		data: ScenarioUpdate[];
 		status: AsyncOperationStatus;
 		error: null | RequestHelperError;
 	};
@@ -86,6 +87,14 @@ const viewStore = derived<Writable<DataState>, ViewState>(dataStore, (state) => 
 	getOperationById: (id: string) => state.operations[id]
 }));
 
+function scenarioToVM(scenario: Scenario): ScenarioUpdate {
+	return {
+		...scenario,
+		previewFile: null,
+		previewURL: scenario.previewURL || null
+	};
+}
+
 export const scenarios = {
 	subscribe: viewStore.subscribe,
 	fetchList: async (): Promise<void> => {
@@ -98,7 +107,15 @@ export const scenarios = {
 		mutateList({
 			status: list ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			ids: list ? list.data.map((s) => s.id) : [],
-			data: list ? list.data.reduce((acc, s) => ({ ...acc, [s.id]: s }), {}) : {},
+			data: list
+				? list.data.reduce(
+						(acc, s) => ({
+							...acc,
+							[s.id]: scenarioToVM(s)
+						}),
+						{}
+				  )
+				: {},
 			total: list ? list.total : 0,
 			perPage: list ? list.perPage : 0,
 			error
@@ -132,7 +149,10 @@ export const scenarios = {
 		if (scenario) {
 			mutateList({
 				ids: [scenario.id, ...state.list.ids],
-				data: { ...state.list.data, [scenario.id]: scenario }
+				data: {
+					...state.list.data,
+					[scenario.id]: scenarioToVM(scenario)
+				}
 			});
 			toastStore.trigger({
 				message: 'Scenario created successfully',
@@ -164,7 +184,13 @@ export const scenarios = {
 			error: null
 		});
 
-		const [error, scenario] = await request<Scenario>(`/api/scenarios/${data.id}`, 'PATCH', data);
+		const formData = scenarioToFormData(data);
+
+		const [error, scenario] = await requestMultipartFormData<Scenario>(
+			`/api/scenarios/${data.id}`,
+			'PATCH',
+			formData
+		);
 		// update operation status
 		mutateOperation(data.id, {
 			status: scenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
@@ -172,7 +198,7 @@ export const scenarios = {
 		});
 		if (scenario) {
 			mutateList({
-				data: { ...state.list.data, [scenario.id]: scenario }
+				data: { ...state.list.data, [scenario.id]: scenarioToVM(scenario) }
 			});
 			toastStore.trigger({
 				message: 'Scenario saved successfully',

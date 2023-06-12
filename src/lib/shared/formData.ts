@@ -1,4 +1,4 @@
-import type { MovieClipCommand, MovieCommand } from './types';
+import type { MovieClipCommand, MovieCommand, ScenarioUpdate } from './types';
 
 export function movieToFormData(movie: MovieCommand): FormData {
 	const formData = new FormData();
@@ -72,4 +72,77 @@ export function formDataToMovie(formData: FormData): MovieCommand {
 		movie.clips.push(clip);
 	}
 	return movie;
+}
+
+export function scenarioToFormData(scenario: ScenarioUpdate): FormData {
+	const formData = new FormData();
+	formData.append('id', scenario.id);
+	formData.append('title', scenario.title);
+	formData.append('description', scenario.description);
+	if (scenario.previewURL) {
+		formData.append('previewURL', scenario.previewURL);
+	}
+	if (scenario.previewFile) {
+		formData.append('previewFile', scenario.previewFile);
+	}
+	// attachments array
+	formData.append('attachments.length', scenario.attachments.length.toString());
+	scenario.attachments.forEach((attachment, index) => {
+		formData.append(`attachments[${index}].id`, attachment.id);
+		formData.append(`attachments[${index}].title`, attachment.title);
+		if (attachment.url) {
+			formData.append(`attachments[${index}].url`, attachment.url);
+		}
+		if (attachment.file) {
+			formData.append(`attachments[${index}].file`, attachment.file);
+		}
+	});
+	formData.append('actors.length', scenario.actors.length.toString());
+	scenario.actors.forEach((actor, index) => {
+		formData.append(`actors[${index}]`, actor);
+	});
+	formData.append('scenes.length', scenario.scenes.length.toString());
+	scenario.scenes.forEach((scene, index) => {
+		formData.append(`scenes[${index}].description`, scene.description);
+		if (typeof scene.actor === 'number') {
+			formData.append(`scenes[${index}].actor`, scene.actor.toString());
+		}
+	});
+	return formData;
+}
+
+export function formDataToScenario(formData: FormData): ScenarioUpdate {
+	const scenario: ScenarioUpdate = {
+		id: formData.get('id') as string,
+		title: formData.get('title') as string,
+		description: formData.get('description') as string,
+		previewURL: formData.get('previewURL') as string,
+		previewFile: formData.get('previewFile') as File,
+		attachments: [],
+		actors: [],
+		scenes: []
+	};
+	const attachmentCount = parseInt(formData.get('attachments.length') as string, 10);
+	for (let i = 0; i < attachmentCount; i++) {
+		const id = formData.get(`attachments[${i}].id`) as string;
+		const url = formData.get(`attachments[${i}].url`) as string;
+		const title = formData.get(`attachments[${i}].title`) as string;
+		const file = formData.get(`attachments[${i}].file`) as File;
+		scenario.attachments.push({ id, title, url, file });
+	}
+	const actorCount = parseInt(formData.get('actors.length') as string, 10);
+	for (let i = 0; i < actorCount; i++) {
+		scenario.actors.push(formData.get(`actors[${i}]`) as string);
+	}
+	const sceneCount = parseInt(formData.get('scenes.length') as string, 10);
+	for (let i = 0; i < sceneCount; i++) {
+		const description = formData.get(`scenes[${i}].description`) as string;
+		const actorStr = formData.get(`scenes[${i}].actor`) as string;
+		const scene: ScenarioUpdate['scenes'][number] = {
+			description,
+			actor: actorStr ? parseInt(actorStr, 10) : null
+		};
+		scenario.scenes.push(scene);
+	}
+	return scenario;
 }

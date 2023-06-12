@@ -58,10 +58,17 @@
 					<a href={`/scenarios/${scenario.id}`} class="block">
 						<div class="card">
 							<header>
-								<img src="/img/img.png" class="rounded-t-3xl bg-black/50 w-full h-48" alt="{scenario.title}">
-<!--								<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">-->
-<!--									<span class="opacity-60">No preview</span>-->
-<!--								</div>-->
+								{#if scenario.previewURL}
+									<img
+										src={scenario.previewURL}
+										class="rounded-t-3xl bg-black/25 w-full h-48"
+										alt={scenario.title}
+									/>
+								{:else}
+									<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">
+										<span class="opacity-60">No preview</span>
+									</div>
+								{/if}
 							</header>
 							<div class="flex gap-1 p-4 space-y-4">
 								<div class="truncate">
@@ -98,10 +105,10 @@
 									{#each scenario.actors as actor}
 										{#if actor.length > 0}
 											<Avatar
-													width="w-10"
-													initials={actor}
-													background="bg-gradient-to-br variant-gradient-secondary-tertiary"
-													class="ring-2 ring-white"
+												width="w-10"
+												initials={actor}
+												background="bg-gradient-to-br variant-gradient-secondary-tertiary"
+												class="ring-2 ring-white"
 											/>
 										{/if}
 									{/each}

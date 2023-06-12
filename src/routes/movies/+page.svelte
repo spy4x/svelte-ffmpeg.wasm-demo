@@ -2,7 +2,7 @@
 	import { CopyLink, Loading } from '@components';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
 	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
-	import { movies } from '@stores';
+	import { movies, scenarios } from '@stores';
 	import { format } from 'date-fns';
 </script>
 
@@ -49,10 +49,21 @@
 					<a href={`/movies/${movie.id}`} class="block">
 						<div class="card">
 							<header>
-								<img src="/img/img.png" class="rounded-t-3xl bg-black/50 w-full h-48" alt="{movie.title}">
-<!--								<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">-->
-<!--									<span class="opacity-60">No preview</span>-->
-<!--								</div>-->
+								{#if movie.videoURL}
+									<video src={movie.videoURL} class="rounded-t-3xl w-full h-48" controls>
+										<track kind="captions" />
+									</video>
+								{:else if $scenarios.getById(movie.scenarioId)?.previewURL}
+									<img
+										src={$scenarios.getById(movie.scenarioId)?.previewURL}
+										class="rounded-t-3xl bg-black/50 w-full h-48"
+										alt={$scenarios.getById(movie.scenarioId)?.title}
+									/>
+								{:else}
+									<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">
+										<span class="opacity-60">No preview</span>
+									</div>
+								{/if}
 							</header>
 							<div class="flex gap-1 p-4 space-y-4">
 								<div class="truncate">
@@ -89,10 +100,10 @@
 									{#each movie.actors as actor}
 										{#if actor.length > 0}
 											<Avatar
-													width="w-10"
-													initials={actor}
-													background="bg-gradient-to-br variant-gradient-secondary-tertiary"
-													class="ring-2 ring-white"
+												width="w-10"
+												initials={actor}
+												background="bg-gradient-to-br variant-gradient-secondary-tertiary"
+												class="ring-2 ring-white"
 											/>
 										{/if}
 									{/each}
