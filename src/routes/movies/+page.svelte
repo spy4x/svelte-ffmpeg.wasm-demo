@@ -10,14 +10,14 @@
 	{#if $movies.list.status === AsyncOperationStatus.IDLE || $movies.list.status === AsyncOperationStatus.IN_PROGRESS}
 		<Loading />
 	{:else if $movies.list.status === AsyncOperationStatus.ERROR}
-		<div class="text-center">
-			<h1 class="text-3xl font-bold">Failed to load movies</h1>
+		<div class="text-center py-10 sm:px-4">
+			<h1 class="h2">Failed to load movies</h1>
 			<p class="text-lg">Please try again later</p>
 		</div>
 	{:else if $movies.list.status === AsyncOperationStatus.SUCCESS}
 		{#if $movies.list.data.length === 0}
-			<div class="text-center">
-				<h1 class="text-3xl font-bold mb-3">No movies found</h1>
+			<div class="text-center py-10 sm:px-4">
+				<h1 class="h2 mb-3">No movies found</h1>
 				<a href="/movies/new" class="btn variant-filled-primary">Create</a>
 			</div>
 		{:else}

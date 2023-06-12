@@ -19,14 +19,14 @@
 	{#if $scenarios.list.status === AsyncOperationStatus.IDLE || $scenarios.list.status === AsyncOperationStatus.IN_PROGRESS}
 		<Loading />
 	{:else if $scenarios.list.status === AsyncOperationStatus.ERROR}
-		<div class="text-center">
-			<h1 class="text-3xl font-bold">Failed to load scenarios</h1>
+		<div class="text-center py-10 sm:px-4">
+			<h1 class="h2">Failed to load scenarios</h1>
 			<p class="text-lg">Please try again later</p>
 		</div>
 	{:else if $scenarios.list.status === AsyncOperationStatus.SUCCESS}
 		{#if $scenarios.list.data.length === 0}
-			<div class="text-center">
-				<h1 class="text-3xl font-bold mb-3">No scenarios found</h1>
+			<div class="text-center py-10 sm:px-4">
+				<h1 class="h2 mb-3">No scenarios found</h1>
 				<a href="/scenarios/new" class="btn variant-filled-primary">Create</a>
 			</div>
 		{:else}

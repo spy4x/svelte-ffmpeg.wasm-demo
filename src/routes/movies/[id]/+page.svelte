@@ -427,7 +427,7 @@
 			<div class="fixed bottom-6 inset-x-4">
 				<div class="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
 					<div class="lg:col-start-2 lg:col-span-2">
-						<div class="flex items-center px-8 py-6 variant-glass-surface rounded-3xl">
+						<div class="flex items-center p-4 lg:p-8 variant-glass-surface rounded-3xl">
 							{#if showMoreUI}
 								<button
 									on:click={() =>

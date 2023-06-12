@@ -86,7 +86,8 @@
 
 	<div class="flex gap-2">
 		{#if clip.url && clip.status === VideoStatus.IDLE}
-			<button on:click={record} class="btn variant-filled-secondary w-48"> Re-record </button>
+			<button on:click={record} class="btn variant-filled-secondary w-48">
+				<span class="text-white">Re-record</span> </button>
 		{/if}
 		{#if clip.status === VideoStatus.RECORDING}
 			<button on:click={stopRecording} class="btn variant-filled-warning w-48">

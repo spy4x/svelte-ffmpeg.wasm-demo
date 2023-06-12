@@ -243,14 +243,14 @@
 					</div>
 				</div>
 
-				<div class="card px-8 py-6 flex items-center justify-between">
+				<div class="card p-4 lg:p-8 flex items-center justify-between">
 					<button
 						on:click={addScene}
 						bind:this={addSceneButton}
 						type="button"
 						class="btn variant-filled-secondary"
 					>
-						Add scene
+						<span class="text-white">Add scene</span>
 					</button>
 
 					<span>Scenes: {scenario.scenes.length}</span>
