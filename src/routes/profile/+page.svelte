@@ -39,16 +39,18 @@
 		<div class="card p-4 flex flex-col gap-4">
 			<Avatar
 				class="mx-auto"
-				size="lg"
+				width="w-32"
 				initials={$auth.user.firstName || $auth.user.email || '--'}
 				src={$auth.user.photoURL ?? undefined}
 				alt="User avatar"
 			/>
 
-			<h1 class="h1 text-center">
+			<h1 class="h3 text-center">
 				{$auth.user.firstName || ''}
 				{$auth.user.lastName || ''}
-				<p class="text-lg">{$auth.user.email}</p>
+				{#if $auth.user.email}
+					<p class="h4">{$auth.user.email}</p>
+				{/if}
 			</h1>
 
 			<button
