@@ -46,7 +46,10 @@
 	}
 
 	function addScene() {
-		scenario.scenes = [...scenario.scenes, { actor: scenario.actors[0], description: '' }];
+		scenario.scenes = [
+			...scenario.scenes,
+			{ actor: scenario.actors[0], description: 'Directions: \n\n\nDialogue: \n\n\n' }
+		];
 		// wait a moment before DOM is updated with new scene
 		setTimeout(() => addSceneButton.scrollIntoView({ behavior: 'smooth' }));
 	}
@@ -113,7 +116,7 @@
 					<span>Description</span>
 					<textarea
 						bind:value={scenario.description}
-						class="textarea"
+						class="textarea min-h-[100px]"
 						rows="5"
 						placeholder="Enter description"
 					/>
@@ -200,7 +203,8 @@
 									</header>
 									<textarea
 										bind:value={scene.description}
-										class="textarea"
+										class="textarea min-h-[100px]"
+										rows="5"
 										placeholder="Enter description"
 									/>
 								</div>
