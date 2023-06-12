@@ -17,10 +17,12 @@
 		id = $page.params.id;
 		const unsubscribe = scenarios.subscribe((s) => {
 			const isListLoaded = s.list.status === AsyncOperationStatus.SUCCESS;
-			const isUpdateInProgress =
-				s.operations[id]?.type === EntityOperationType.UPDATE &&
-				s.operations[id]?.status === AsyncOperationStatus.IN_PROGRESS;
-			if (isListLoaded && !isUpdateInProgress) {
+			const isIdleOrUpdated =
+				s.operations[id]?.type === EntityOperationType.UPDATE
+					? s.operations[id]?.status === AsyncOperationStatus.IDLE ||
+					  s.operations[id]?.status === AsyncOperationStatus.SUCCESS
+					: true;
+			if (isListLoaded && isIdleOrUpdated) {
 				const sc = s.getById(id);
 				if (!sc) {
 					toastStore.trigger({

@@ -48,7 +48,6 @@ export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
 	const userId = locals.user.id;
 	const payload = await request.formData();
 	const formDataScenario = formDataToScenario(payload);
-	console.log(formDataScenario);
 	const parseResult = ScenarioUpdateSchema.safeParse(formDataScenario);
 	if (!parseResult.success) {
 		return json(
