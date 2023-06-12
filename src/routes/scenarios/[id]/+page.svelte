@@ -3,14 +3,15 @@
 	import { page } from '$app/stores';
 	import { Loading } from '@components';
 	import { AsyncOperationStatus, EntityOperationType, type ScenarioUpdate } from '@shared';
-	import {AppBar, Avatar, toastStore} from '@skeletonlabs/skeleton';
+	import { AppBar, Avatar, toastStore } from '@skeletonlabs/skeleton';
 	import { movies, scenarios } from '@stores';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
 
 	let id: string;
-	let scenario: null | ScenarioUpdate;
+	let scenario: ScenarioUpdate;
 	let creatingMovieId = '';
+	let addSceneButton: HTMLButtonElement;
 
 	onMount(() => {
 		id = $page.params.id;
@@ -43,13 +44,16 @@
 		await movies.createFromScenario(creatingMovieId, scenarioId);
 		goto(`/movies/${creatingMovieId}`);
 	}
-	export const scrollEnd = () => {
-		console.log("scrollTo", document.documentElement.scrollHeight)
-		window.scrollTo({
-			top: document.documentElement.scrollHeight,
-			behavior: "smooth"
-		});
-	};
+
+	function addScene() {
+		scenario.scenes = [...scenario.scenes, { actor: scenario.actors[0], description: '' }];
+		// wait a moment before DOM is updated with new scene
+		setTimeout(() => addSceneButton.scrollIntoView({ behavior: 'smooth' }));
+	}
+
+	function deleteScene(index: number): void {
+		scenario.scenes = scenario.scenes.filter((a, i) => index !== i);
+	}
 </script>
 
 <div class="container h-full mx-auto">
@@ -111,7 +115,8 @@
 						bind:value={scenario.description}
 						class="textarea"
 						rows="5"
-						placeholder="Enter description"></textarea>
+						placeholder="Enter description"
+					/>
 				</label>
 
 				<hr class="opacity-50" />
@@ -145,77 +150,109 @@
 					<div class="flex flex-col gap-5">
 						{#each scenario.scenes as scene, i}
 							<div
-								class="grid gap-2 {i % 2 !== 0
-										? 'grid-cols-[1fr_auto]'
-										: 'grid-cols-[auto_1fr]'}"
-						>
-							{#if i % 2 === 0}
-								<Avatar
-										initials={typeof scene.actor === 'number'
+								class="grid gap-2 {i % 2 !== 0 ? 'grid-cols-[1fr_auto]' : 'grid-cols-[auto_1fr]'}"
+							>
+								{#if i % 2 === 0}
+									<div class="flex flex-col gap-3 items-center">
+										<Avatar
+											initials={typeof scene.actor === 'number'
 												? scenario?.actors[scene.actor]
 												: '---No actor---'}
-										width="w-8 lg:w-12"
-								/>
-							{/if}
-							<div
-									class="card p-4 space-y-2 {i % 2 !== 0
-											? 'variant-soft-primary rounded-tr-none'
-											: 'variant-soft rounded-tl-none'}"
-							>
-								<header class="flex justify-between items-center">
-									<select bind:value={scene.actor} class="select">
-										<option value={undefined}>---No actor---</option>
-										{#each scenario.actors as actor, ai}
-											<option value={ai}>{actor}</option>
-										{/each}
-									</select>
-									<small class="opacity-50 srink-0 whitespace-nowrap pl-3"
-									>Scene #{i + 1}</small
-									>
-								</header>
-								<textarea
+											width="w-8 lg:w-12"
+										/>
+										<button
+											on:click={() =>
+												(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
+											type="button"
+											class="btn-icon variant-soft-surface"
+											title="Delete scene"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-6 w-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+												/>
+											</svg>
+										</button>
+									</div>
+								{/if}
+								<div
+									class="card variant-soft p-4 space-y-2 {i % 2
+										? 'rounded-tr-none'
+										: 'rounded-tl-none'}"
+								>
+									<header class="flex justify-between items-center">
+										<select bind:value={scene.actor} class="select">
+											<option value={undefined}>---No actor---</option>
+											{#each scenario.actors as actor, ai}
+												<option value={ai}>{actor}</option>
+											{/each}
+										</select>
+										<small class="opacity-50 srink-0 whitespace-nowrap pl-3">Scene #{i + 1}</small>
+									</header>
+									<textarea
 										bind:value={scene.description}
 										class="textarea"
-										placeholder="Enter description"></textarea>
-							</div>
-							{#if i % 2 !== 0}
-								<Avatar
-										initials={scene.actor === undefined
-												? '---No actor---'
-												: scenario?.actors[scene.actor]}
-										width="w-8 lg:w-12"
-								/>
-							{/if}
-						</div>
-							<div class="text-center">
-								<button
-										on:click={() =>
-													(scenario.scenes = scenario.scenes.filter((a, index) => index !== i))}
-										type="button"
-										class="btn variant-soft-error"
-								>
-									Delete scene
-								</button>
+										placeholder="Enter description"
+									/>
+								</div>
+								{#if i % 2 !== 0}
+									<div class="flex flex-col gap-3 items-center">
+										<Avatar
+											initials={typeof scene.actor === 'number'
+												? scenario?.actors[scene.actor]
+												: '---No actor---'}
+											width="w-8 lg:w-12"
+										/>
+										<button
+											on:click={() => deleteScene(i)}
+											type="button"
+											class="btn-icon variant-soft-surface"
+											title="Delete scene"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-6 w-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+												/>
+											</svg>
+										</button>
+									</div>
+								{/if}
 							</div>
 						{/each}
 					</div>
 				</div>
 
-				<div class="card px-8 py-6 flex items-center">
+				<div class="card px-8 py-6 flex items-center justify-between">
 					<button
-						on:click={() =>
-							(scenario.scenes = [
-								...scenario.scenes,
-								{ actor: scenario.actors[0], description: '' }
-							],
-							  scrollEnd())}
+						on:click={addScene}
+						bind:this={addSceneButton}
 						type="button"
 						class="btn variant-filled-secondary"
 					>
 						Add scene
 					</button>
 
-					<button class="ml-auto btn variant-filled-primary">
+					<span>Scenes: {scenario.scenes.length}</span>
+
+					<button class="btn variant-filled-primary">
 						{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 							<Loading />
 							Saving...
