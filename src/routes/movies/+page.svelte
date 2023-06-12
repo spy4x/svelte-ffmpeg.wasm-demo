@@ -66,7 +66,7 @@
 								</div>
 							</div>
 							<section class="px-4">
-								<div data-e2e="actors" class="py-4 px-0.5 flex overflow-x-scroll gap-1">
+								<div data-e2e="actors" class="py-4 px-0.5 isolate flex -space-x-2 overflow-hidden">
 									{#if !movie.actors.length}
 										<span class="chip rounded-full p-0 pr-4 variant-soft">
 											<span
