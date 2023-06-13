@@ -12,6 +12,7 @@
 	import { AsyncOperationStatus } from '@shared';
 	import { page } from '$app/stores';
 	import { initPopups } from '@client/services';
+	import { Role } from '@prisma/client';
 
 	initPopups();
 
@@ -35,26 +36,58 @@
 		<AppBar>
 			<svelte:fragment slot="lead">
 				<a href="/">
-					<strong class="text-xl uppercase tracking-wide">Roley</strong>
+					<strong class="text-xl uppercase tracking-wide">
+						{#if $auth.user?.role === Role.ADMIN}
+							<span class="chip variant-soft-warning text-lg">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-6 w-6 mr-2"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+									stroke-width="2"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M13 10V3L4 14h7v7l9-11h-7z"
+									/>
+								</svg>
+								Admin Panel
+							</span>
+						{:else}
+							Roley
+						{/if}
+					</strong>
 				</a>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				{#if $auth.user}
 					<div class="flex items-center gap-8 text-sm">
-						<a
-							class="hover:underline underline-offset-2"
-							class:underline={$page.url.pathname.startsWith('/scenarios')}
-							href="/scenarios"
-						>
-							Scenarios
-						</a>
-						<a
-							class="hover:underline underline-offset-2"
-							class:underline={$page.url.pathname.startsWith('/movies')}
-							href="/movies"
-						>
-							Movies
-						</a>
+						{#if $auth.user.role === Role.USER}
+							<a
+								class="hover:underline underline-offset-2"
+								class:underline={$page.url.pathname.startsWith('/scenarios')}
+								href="/scenarios"
+							>
+								Scenarios
+							</a>
+							<a
+								class="hover:underline underline-offset-2"
+								class:underline={$page.url.pathname.startsWith('/movies')}
+								href="/movies"
+							>
+								Movies
+							</a>
+						{:else}
+							<a
+								class="hover:underline underline-offset-2"
+								class:underline={$page.url.pathname.startsWith('/scenarios')}
+								href="/scenarios"
+							>
+								Shared scenarios
+							</a>
+						{/if}
 						<button
 							class="btn-icon btn-sm variant-ghost-secondary"
 							use:popup={userProfileDropdown}

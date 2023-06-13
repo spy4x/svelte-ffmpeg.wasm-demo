@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { movies, scenarios } from '@stores';
+	import { auth, movies, scenarios } from '@stores';
 	import { Loading, Debug } from '@components';
 	import { AsyncOperationStatus, EntityOperationType } from '@shared';
 	import { format } from 'date-fns';
 	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
 	import { generateRandomString } from 'lucia-auth';
 	import { goto } from '$app/navigation';
+	import { Role } from '@prisma/client';
 
 	let creatingMovieId = '';
 	async function createMovie(scenarioId: string) {
@@ -47,7 +48,14 @@
 						/>
 					</svg>
 				</svelte:fragment>
-				<h1 class="h2">Scenarios</h1>
+				<h1 class="h2">
+					{#if $auth.user?.role === Role.ADMIN}
+						Global
+					{:else}
+						My
+					{/if}
+					Scenarios
+				</h1>
 				<svelte:fragment slot="trail">
 					<a href="/scenarios/new" class="ml-auto btn variant-filled-primary">Create</a>
 				</svelte:fragment>
@@ -80,6 +88,40 @@
 									</div>
 								</div>
 							</div>
+							{#if $auth.user.role === Role.ADMIN}
+								<span class="chip variant-soft flex items-center gap-2 font-bold text-lg">
+									{#if scenario.access === 'SHARED'}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-6 w-6 text-success-500"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											stroke-width="2"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+									{:else}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-5 w-5 text-warning-500"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									{/if}
+									{scenario.access}
+								</span>
+							{/if}
 							<section class="px-4">
 								<div data-e2e="actors" class="py-4 px-0.5 isolate flex -space-x-2 overflow-hidden">
 									{#if !scenario.actors.length}

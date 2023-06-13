@@ -2,9 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { Debug, Loading } from '@components';
+	import { Role } from '@prisma/client';
 	import { AsyncOperationStatus, EntityOperationType, type ScenarioUpdate } from '@shared';
 	import { AppBar, Avatar, FileButton, toastStore } from '@skeletonlabs/skeleton';
-	import { movies, scenarios } from '@stores';
+	import { auth, movies, scenarios } from '@stores';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
 
@@ -125,6 +126,52 @@
 			class="grid grid-cols-1 lg:grid-cols-3 gap-y-8 lg:gap-12"
 		>
 			<div class="card p-4 lg:p-8 flex flex-col gap-5">
+				{#if $auth.user?.role === Role.ADMIN}
+					<label class="flex items-center space-x-2 text-xl">
+						<input
+							class="checkbox w-6 h-6"
+							type="checkbox"
+							checked={scenario.access === 'SHARED'}
+							on:change={(e) => (scenario.access = e.target.checked ? 'SHARED' : 'PRIVATE')}
+						/>
+						<p>Is public?</p>
+					</label>
+					{#if scenario.access === 'SHARED'}
+						<p class="text-success-500">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-6 w-6 inline-block"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							Users can see and use this scenario for their movies.
+						</p>
+					{:else}
+						<p class="text-warning-500">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5 inline-block"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+							Only you can see this scenario. You can work on this draft and publish it later.
+						</p>
+					{/if}
+				{/if}
 				<label>
 					<span>Title</span>
 					<input bind:value={scenario.title} class="input" type="text" placeholder="Enter title" />

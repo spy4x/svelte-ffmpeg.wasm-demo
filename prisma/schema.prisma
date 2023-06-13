@@ -10,12 +10,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model AuthUser {
   id           String        @id @unique @db.VarChar(15)
   auth_session AuthSession[]
   auth_key     AuthKey[]
   // here you can add custom fields for your user
   // e.g. name, email, username, roles, etc.
+  role         Role          @default(USER)
   email        String?       @unique @db.VarChar(50)
   firstName    String?       @map("first_name") @db.VarChar(50)
   lastName     String?       @map("last_name") @db.VarChar(50)
@@ -55,17 +61,23 @@ model AuthKey {
   @@map("user_auth_keys")
 }
 
+enum ScenarioAccess {
+  PRIVATE
+  SHARED
+}
+
 model Scenario {
-  id          String   @id @unique @db.VarChar(15)
-  userId      String?  @map("user_id") @db.VarChar(15)
-  title       String   @default("Untitled") @db.VarChar(100)
-  description String   @default("") @db.VarChar(1000)
-  previewURL  String?  @map("preview_url") @db.VarChar(400)
-  attachments Json[]   @default([]) @db.JsonB
-  actors      String[] @db.VarChar(100)
-  scenes      Json[]   @default([]) @db.JsonB
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  id          String         @id @unique @db.VarChar(15)
+  access      ScenarioAccess @default(PRIVATE)
+  userId      String?        @map("user_id") @db.VarChar(15)
+  title       String         @default("Untitled") @db.VarChar(100)
+  description String         @default("") @db.VarChar(1000)
+  previewURL  String?        @map("preview_url") @db.VarChar(400)
+  attachments Json[]         @default([]) @db.JsonB
+  actors      String[]       @db.VarChar(100)
+  scenes      Json[]         @default([]) @db.JsonB
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at")
 
   user AuthUser? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 

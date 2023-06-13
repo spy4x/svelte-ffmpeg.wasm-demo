@@ -1,5 +1,5 @@
 import { APP_URL, SUPABASE_PROJECT_URL } from '$env/static/private';
-import type { Scenario } from '@prisma/client';
+import { Role, ScenarioAccess, type Scenario } from '@prisma/client';
 import { prisma, supabase } from '@server';
 import { formDataToScenario, ScenarioUpdateSchema } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
@@ -104,7 +104,9 @@ export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
 		const update: Partial<Scenario> = {
 			...scenarioWithoutPreviewFile,
 			attachments: attachmentsWithoutFiles,
-			userId: locals.user.userId
+			userId: locals.user.userId,
+			access:
+				locals.user.role === Role.ADMIN ? scenarioWithoutPreviewFile.access : ScenarioAccess.PRIVATE
 		};
 
 		const updatedScenario = await prisma.scenario.update({

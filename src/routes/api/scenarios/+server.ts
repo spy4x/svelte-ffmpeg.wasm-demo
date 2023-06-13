@@ -1,4 +1,4 @@
-import type { Prisma, Scenario } from '@prisma/client';
+import { Role, type Prisma, type Scenario, ScenarioAccess } from '@prisma/client';
 import { prisma } from '@server';
 import { ScenarioCreateSchema, type ResponseList } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
@@ -43,7 +43,8 @@ export const POST: RequestHandler = async ({ locals, request, cookies }) => {
 		const scenario = await prisma.scenario.create({
 			data: {
 				...parseResult.data,
-				userId: locals.user.userId
+				userId: locals.user.userId,
+				access: locals.user.role === Role.ADMIN ? parseResult.data.access : ScenarioAccess.PRIVATE
 			}
 		});
 		return json(scenario);

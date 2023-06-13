@@ -1,3 +1,4 @@
+import type { ScenarioAccess } from '@prisma/client';
 import type { MovieClipCommand, MovieCommand, ScenarioUpdate } from './types';
 
 export function movieToFormData(movie: MovieCommand): FormData {
@@ -77,6 +78,9 @@ export function formDataToMovie(formData: FormData): MovieCommand {
 export function scenarioToFormData(scenario: ScenarioUpdate): FormData {
 	const formData = new FormData();
 	formData.append('id', scenario.id);
+	if (scenario.access) {
+		formData.append('access', scenario.access);
+	}
 	formData.append('title', scenario.title);
 	formData.append('description', scenario.description);
 	if (scenario.previewURL) {
@@ -114,6 +118,7 @@ export function scenarioToFormData(scenario: ScenarioUpdate): FormData {
 export function formDataToScenario(formData: FormData): ScenarioUpdate {
 	const scenario: ScenarioUpdate = {
 		id: formData.get('id') as string,
+		access: formData.get('access') as ScenarioAccess,
 		title: formData.get('title') as string,
 		description: formData.get('description') as string,
 		previewURL: formData.get('previewURL') as string,

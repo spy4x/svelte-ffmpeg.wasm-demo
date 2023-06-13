@@ -22,6 +22,7 @@ export enum VideoStatus {
 
 export const ScenarioCreateSchema = z.object({
 	id: z.string(),
+	access: z.enum(['SHARED', 'PRIVATE']).optional(),
 	title: z.string(),
 	description: z.string(),
 	previewURL: z.string().max(400).nullable().optional(),
