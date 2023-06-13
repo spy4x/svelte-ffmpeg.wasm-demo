@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { Debug, Loading } from '@components';
-	import { Role } from '@prisma/client';
 	import { AsyncOperationStatus, EntityOperationType, type ScenarioUpdate } from '@shared';
 	import { AppBar, Avatar, FileButton, toastStore } from '@skeletonlabs/skeleton';
 	import { auth, movies, scenarios } from '@stores';
@@ -126,7 +125,7 @@
 			class="grid grid-cols-1 lg:grid-cols-3 gap-y-8 lg:gap-12"
 		>
 			<div class="card p-4 lg:p-8 flex flex-col gap-5">
-				{#if $auth.user?.role === Role.ADMIN}
+				{#if $auth.user?.role === 'ADMIN'}
 					<label class="flex items-center space-x-2 text-xl">
 						<input
 							class="checkbox w-6 h-6"
@@ -182,7 +181,8 @@
 						bind:value={scenario.description}
 						class="textarea min-h-[75px] block"
 						rows="4"
-						placeholder="Enter description"></textarea>
+						placeholder="Enter description"
+					/>
 				</label>
 
 				<!-- svelte-ignore a11y-label-has-associated-control -->
@@ -254,20 +254,44 @@
 
 					{#if scenario.attachments.length}
 						<ol class="list flex flex-col gap-2" id="uploaded-list">
-						{#each scenario.attachments as attachment, index}
-							<li class="flex justify-between gap-2">
-								<span>
-									{index + 1}. {attachment.title}
-								</span>
+							{#each scenario.attachments as attachment, index}
+								<li class="flex justify-between gap-2">
+									<span>
+										{index + 1}. {attachment.title}
+									</span>
 
-								<span class="flex">
-									{#if attachment.url}
-										<!-- download attachment button (a href) -->
-										<a
-											download={attachment.title}
-											href={attachment.url}
+									<span class="flex">
+										{#if attachment.url}
+											<!-- download attachment button (a href) -->
+											<a
+												download={attachment.title}
+												href={attachment.url}
+												class="ml-auto shrink-0 opacity-80 hover:opacity-100"
+												title="Download attachment"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="h-6 w-6"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+													stroke-width="2"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+													/>
+												</svg>
+											</a>
+										{/if}
+
+										<button
+											on:click={() =>
+												(scenario.attachments = scenario.attachments.filter((a, i) => i !== index))}
+											type="button"
 											class="ml-auto shrink-0 opacity-80 hover:opacity-100"
-											title="Download attachment"
+											title="Delete attachment"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -280,38 +304,14 @@
 												<path
 													stroke-linecap="round"
 													stroke-linejoin="round"
-													d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+													d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
 												/>
 											</svg>
-										</a>
-									{/if}
-
-									<button
-										on:click={() =>
-											(scenario.attachments = scenario.attachments.filter((a, i) => i !== index))}
-										type="button"
-										class="ml-auto shrink-0 opacity-80 hover:opacity-100"
-										title="Delete attachment"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											stroke-width="2"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-											/>
-										</svg>
-									</button>
-								</span>
-							</li>
-						{/each}
-					</ol>
+										</button>
+									</span>
+								</li>
+							{/each}
+						</ol>
 					{/if}
 				</div>
 			</div>

@@ -12,7 +12,6 @@
 	import { AsyncOperationStatus } from '@shared';
 	import { page } from '$app/stores';
 	import { initPopups } from '@client/services';
-	import { Role } from '@prisma/client';
 
 	initPopups();
 
@@ -37,7 +36,7 @@
 			<svelte:fragment slot="lead">
 				<a href="/">
 					<strong class="text-xl uppercase tracking-wide">
-						{#if $auth.user?.role === Role.ADMIN}
+						{#if $auth.user?.role === 'ADMIN'}
 							<span class="chip variant-soft-warning text-lg">
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -64,7 +63,7 @@
 			<svelte:fragment slot="trail">
 				{#if $auth.user}
 					<div class="flex items-center gap-8 text-sm">
-						{#if $auth.user.role === Role.USER}
+						{#if $auth.user.role === 'USER'}
 							<a
 								class="hover:underline underline-offset-2"
 								class:underline={$page.url.pathname.startsWith('/scenarios')}

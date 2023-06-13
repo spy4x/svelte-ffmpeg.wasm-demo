@@ -6,7 +6,6 @@
 	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
 	import { generateRandomString } from 'lucia-auth';
 	import { goto } from '$app/navigation';
-	import { Role } from '@prisma/client';
 
 	let creatingMovieId = '';
 	async function createMovie(scenarioId: string) {
@@ -49,7 +48,7 @@
 					</svg>
 				</svelte:fragment>
 				<h1 class="h2">
-					{#if $auth.user?.role === Role.ADMIN}
+					{#if $auth.user?.role === 'ADMIN'}
 						Global
 					{:else}
 						My
@@ -88,7 +87,7 @@
 									</div>
 								</div>
 							</div>
-							{#if $auth.user.role === Role.ADMIN}
+							{#if $auth.user?.role === 'ADMIN'}
 								<span class="chip variant-soft flex items-center gap-2 font-bold text-lg">
 									{#if scenario.access === 'SHARED'}
 										<svg
