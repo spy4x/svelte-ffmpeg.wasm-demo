@@ -436,7 +436,7 @@
 			</div>
 		</form>
 	{:else if $scenarios.my.status === AsyncOperationStatus.IN_PROGRESS}
-		<Loading />
+		<div class="flex justify-center items-center h-full"><Loading /></div>
 	{:else if $scenarios.my.status === AsyncOperationStatus.ERROR}
 		<p class="variant-filled-danger">
 			Failed to load scenario with id <code>{id}</code>

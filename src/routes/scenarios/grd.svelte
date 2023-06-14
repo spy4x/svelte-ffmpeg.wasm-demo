@@ -19,7 +19,7 @@
 </script>
 
 {#if state.status === AsyncOperationStatus.IDLE || state.status === AsyncOperationStatus.IN_PROGRESS}
-	<Loading />
+	<div class="flex justify-center items-center h-full"><Loading /></div>
 {:else if state.status === AsyncOperationStatus.ERROR}
 	<div class="text-center py-10 sm:px-4">
 		<h1 class="h2">Failed to load scenarios</h1>
@@ -28,7 +28,7 @@
 {:else if state.status === AsyncOperationStatus.SUCCESS}
 	{#if state.data.length === 0}
 		<div class="text-center py-10 sm:px-4">
-			<h1 class="h2 mb-3">No scenarios found</h1>
+			<h1 class="h2 mb-6">You haven’t created a scenario yet.</h1>
 			{#if access === 'PRIVATE'}
 				<a href="/scenarios/new" class="btn variant-filled-primary">Create</a>
 			{/if}

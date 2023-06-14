@@ -47,8 +47,9 @@
 	<form
 		data-e2e="new-scenario-form"
 		on:submit|preventDefault={() => void scenarios.create(scenario)}
+		class="block w-full"
 	>
-		<div class="card">
+		<div class="card max-w-sm w-full mx-auto">
 			<section class="p-4">
 				<div class="flex flex-col gap-5">
 					<label>

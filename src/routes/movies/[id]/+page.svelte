@@ -458,7 +458,7 @@
 			</div>
 		</form>
 	{:else if $movies.list.status === AsyncOperationStatus.IN_PROGRESS}
-		<Loading />
+		<div class="flex justify-center items-center h-full"><Loading /></div>
 	{:else if $movies.list.status === AsyncOperationStatus.ERROR}
 		<p class="variant-filled-danger">
 			Failed to load movie with id <code>{id}</code>

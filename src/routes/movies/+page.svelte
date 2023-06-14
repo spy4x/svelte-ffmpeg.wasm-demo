@@ -8,7 +8,7 @@
 
 <div class="container h-full mx-auto flex flex-col items-center">
 	{#if $movies.list.status === AsyncOperationStatus.IDLE || $movies.list.status === AsyncOperationStatus.IN_PROGRESS}
-		<Loading />
+		<div class="flex justify-center items-center h-full"><Loading /></div>
 	{:else if $movies.list.status === AsyncOperationStatus.ERROR}
 		<div class="text-center py-10 sm:px-4">
 			<h1 class="h2">Failed to load movies</h1>
@@ -17,7 +17,7 @@
 	{:else if $movies.list.status === AsyncOperationStatus.SUCCESS}
 		{#if $movies.list.data.length === 0}
 			<div class="text-center py-10 sm:px-4">
-				<h1 class="h2 mb-3">No movies found</h1>
+				<h1 class="h2 mb-6">You haven’t created a movie yet.</h1>
 				<a href="/movies/new" class="btn variant-filled-primary">Create</a>
 			</div>
 		{:else}
