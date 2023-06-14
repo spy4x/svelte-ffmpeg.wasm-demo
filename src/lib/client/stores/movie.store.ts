@@ -165,7 +165,8 @@ export const movies = {
 			videoURL: null
 		};
 		if (scenarioId) {
-			const scenario = get(scenarios).list.data.find((s) => s.id === scenarioId);
+			const scenariosState = get(scenarios);
+			const scenario = scenariosState.getById(scenarioId);
 			if (!scenario) {
 				toastStore.trigger({
 					message: `Scenario with id ${scenarioId} not found`,

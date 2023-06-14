@@ -56,6 +56,12 @@ export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
 		);
 	}
 	const scenario = parseResult.data;
+	const scenarioInDB = await prisma.scenario.findFirst({
+		where: { id: scenario.id, userId: locals.user.id }
+	});
+	if (!scenarioInDB) {
+		return json({ message: 'Scenario not found' }, { status: 404 });
+	}
 	try {
 		const promises: Promise<UploadResult>[] = [];
 
@@ -141,9 +147,10 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 		return json({ message: 'No id provided' }, { status: 400 });
 	}
 	try {
-		await prisma.scenario.delete({
+		await prisma.scenario.deleteMany({
 			where: {
-				id
+				id,
+				userId: locals.user.userId
 			}
 		});
 		return json({ message: 'deleted' });

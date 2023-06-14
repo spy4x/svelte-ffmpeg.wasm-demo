@@ -16,13 +16,14 @@
 	onMount(() => {
 		id = $page.params.id;
 		const unsubscribe = scenarios.subscribe((s) => {
-			const isListLoaded = s.list.status === AsyncOperationStatus.SUCCESS;
+			const isMyListLoaded = s.my.status === AsyncOperationStatus.SUCCESS;
+			const isSharedListLoaded = s.shared.status === AsyncOperationStatus.SUCCESS;
 			const isIdleOrUpdated =
 				s.operations[id]?.type === EntityOperationType.UPDATE
 					? s.operations[id]?.status === AsyncOperationStatus.IDLE ||
 					  s.operations[id]?.status === AsyncOperationStatus.SUCCESS
 					: true;
-			if (isListLoaded && isIdleOrUpdated) {
+			if (isMyListLoaded && isSharedListLoaded && isIdleOrUpdated) {
 				const sc = s.getById(id);
 				if (!sc) {
 					toastStore.trigger({
@@ -434,9 +435,9 @@
 				</div>
 			</div>
 		</form>
-	{:else if $scenarios.list.status === AsyncOperationStatus.IN_PROGRESS}
+	{:else if $scenarios.my.status === AsyncOperationStatus.IN_PROGRESS}
 		<Loading />
-	{:else if $scenarios.list.status === AsyncOperationStatus.ERROR}
+	{:else if $scenarios.my.status === AsyncOperationStatus.ERROR}
 		<p class="variant-filled-danger">
 			Failed to load scenario with id <code>{id}</code>
 		</p>

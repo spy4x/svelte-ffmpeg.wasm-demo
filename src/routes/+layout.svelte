@@ -63,30 +63,23 @@
 			<svelte:fragment slot="trail">
 				{#if $auth.user}
 					<div class="flex items-center gap-8 text-sm">
-						{#if $auth.user.role === 'USER'}
-							<a
-								class="hover:underline underline-offset-2"
-								class:underline={$page.url.pathname.startsWith('/scenarios')}
-								href="/scenarios"
-							>
-								Scenarios
-							</a>
-							<a
-								class="hover:underline underline-offset-2"
-								class:underline={$page.url.pathname.startsWith('/movies')}
-								href="/movies"
-							>
-								Movies
-							</a>
-						{:else}
-							<a
-								class="hover:underline underline-offset-2"
-								class:underline={$page.url.pathname.startsWith('/scenarios')}
-								href="/scenarios"
-							>
-								Shared scenarios
-							</a>
-						{/if}
+						<a
+							class="hover:underline underline-offset-2"
+							class:underline={$page.url.pathname.startsWith('/scenarios')}
+							href="/scenarios"
+						>
+							{#if $auth.user.role === 'ADMIN'}
+								Global
+							{/if}
+							Scenarios
+						</a>
+						<a
+							class="hover:underline underline-offset-2"
+							class:underline={$page.url.pathname.startsWith('/movies')}
+							href="/movies"
+						>
+							Movies
+						</a>
 						<button
 							class="btn-icon btn-sm variant-ghost-secondary"
 							use:popup={userProfileDropdown}

@@ -5,6 +5,7 @@ import { PrismaError } from 'prisma-error-enum';
 
 export class PrismaService extends PrismaClient {
 	private _isConnected = false;
+	private connecting: Promise<void> | null = null;
 
 	constructor() {
 		super({
@@ -26,11 +27,17 @@ export class PrismaService extends PrismaClient {
 		if (this._isConnected) {
 			return;
 		}
-		const start = Date.now();
-		console.log('Trying to connect to database...');
-		await this.$connect();
-		this._isConnected = true;
-		console.log('Connected to database. Took ' + (Date.now() - start) + 'ms');
+		if (this.connecting) {
+			return this.connecting;
+		}
+		this.connecting = new Promise(async (resolve) => {
+			const start = Date.now();
+			console.log('Trying to connect to database...');
+			await this.$connect();
+			this._isConnected = true;
+			console.log('Connected to database. Took ' + (Date.now() - start) + 'ms');
+			resolve();
+		});
 	}
 
 	// async onModuleInit(): Promise<void> {

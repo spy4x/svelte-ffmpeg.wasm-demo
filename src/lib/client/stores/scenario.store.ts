@@ -22,47 +22,62 @@ export interface ScenarioOperation {
 	error: null | RequestHelperError;
 }
 
+interface ListDataState {
+	ids: string[];
+	data: { [id: string]: ScenarioUpdate };
+	total: number;
+	perPage: number;
+	status: AsyncOperationStatus;
+	error: null | RequestHelperError;
+}
+
 interface DataState {
-	list: {
-		ids: string[];
-		data: { [id: string]: ScenarioUpdate };
-		total: number;
-		perPage: number;
-		status: AsyncOperationStatus;
-		error: null | RequestHelperError;
-	};
+	my: ListDataState;
+	shared: ListDataState;
 	operations: { [id: string]: ScenarioOperation };
 }
+
+export interface ListViewState {
+	data: ScenarioUpdate[];
+	status: AsyncOperationStatus;
+	error: null | RequestHelperError;
+}
+
 interface ViewState {
-	list: {
-		data: ScenarioUpdate[];
-		status: AsyncOperationStatus;
-		error: null | RequestHelperError;
-	};
+	my: ListViewState;
+	shared: ListViewState;
 	operations: { [id: string]: ScenarioOperation };
 	getById: (id: null | string) => null | Scenario;
 	getOperationById: (id: string) => null | ScenarioOperation;
 }
 
-const initialValue: DataState = {
-	list: {
-		ids: [],
-		data: {},
-		total: 0,
-		perPage: 0,
-		status: AsyncOperationStatus.IDLE,
-		error: null
-	},
-	operations: {}
+const listInitialValue: ListDataState = {
+	ids: [],
+	data: {},
+	total: 0,
+	perPage: 0,
+	status: AsyncOperationStatus.IDLE,
+	error: null
 };
 
-const dataStore = writable<DataState>(initialValue);
+function getInitialValue(): DataState {
+	return structuredClone({
+		my: listInitialValue,
+		shared: listInitialValue,
+		operations: {}
+	});
+}
+
+const dataStore = writable<DataState>(getInitialValue());
 
 function mutate(state: Partial<DataState>) {
 	dataStore.update((s) => ({ ...s, ...state }));
 }
-function mutateList(state: Partial<DataState['list']>) {
-	mutate({ list: { ...get(dataStore).list, ...state } });
+function mutateMy(state: Partial<DataState['my']>) {
+	mutate({ my: { ...get(dataStore).my, ...state } });
+}
+function mutateShared(state: Partial<DataState['shared']>) {
+	mutate({ shared: { ...get(dataStore).shared, ...state } });
 }
 function mutateOperation(id: string, state: Partial<ScenarioOperation>) {
 	mutate({
@@ -77,13 +92,18 @@ function mutateOperation(id: string, state: Partial<ScenarioOperation>) {
 }
 
 const viewStore = derived<Writable<DataState>, ViewState>(dataStore, (state) => ({
-	list: {
-		data: state.list.ids.map((id) => state.list.data[id]),
-		status: state.list.status,
-		error: state.list.error
+	my: {
+		data: state.my.ids.map((id) => state.my.data[id]),
+		status: state.my.status,
+		error: state.my.error
+	},
+	shared: {
+		data: state.shared.ids.map((id) => state.shared.data[id]),
+		status: state.shared.status,
+		error: state.shared.error
 	},
 	operations: state.operations,
-	getById: (id: null | string) => state.list.data[id] || null,
+	getById: (id: null | string) => state.my.data[id] || state.shared.data[id] || null,
 	getOperationById: (id: string) => state.operations[id]
 }));
 
@@ -97,18 +117,18 @@ function scenarioToVM(scenario: Scenario): ScenarioUpdate {
 
 export const scenarios = {
 	subscribe: viewStore.subscribe,
-	fetchList: async (): Promise<void> => {
-		// if list.status === in progress - do nothing
-		if (get(dataStore).list.status === AsyncOperationStatus.IN_PROGRESS) {
+	fetchMy: async (): Promise<void> => {
+		// if my.status === in progress - do nothing
+		if (get(dataStore).my.status === AsyncOperationStatus.IN_PROGRESS) {
 			return;
 		}
-		mutateList({ status: AsyncOperationStatus.IN_PROGRESS, error: null });
-		const [error, list] = await request<ResponseList<Scenario>>('/api/scenarios');
-		mutateList({
-			status: list ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
-			ids: list ? list.data.map((s) => s.id) : [],
-			data: list
-				? list.data.reduce(
+		mutateMy({ status: AsyncOperationStatus.IN_PROGRESS, error: null });
+		const [error, my] = await request<ResponseList<Scenario>>('/api/scenarios');
+		mutateMy({
+			status: my ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+			ids: my ? my.data.map((s) => s.id) : [],
+			data: my
+				? my.data.reduce(
 						(acc, s) => ({
 							...acc,
 							[s.id]: scenarioToVM(s)
@@ -116,8 +136,32 @@ export const scenarios = {
 						{}
 				  )
 				: {},
-			total: list ? list.total : 0,
-			perPage: list ? list.perPage : 0,
+			total: my ? my.total : 0,
+			perPage: my ? my.perPage : 0,
+			error
+		});
+	},
+	fetchShared: async (): Promise<void> => {
+		// if shared.status === in progress - do nothing
+		if (get(dataStore).shared.status === AsyncOperationStatus.IN_PROGRESS) {
+			return;
+		}
+		mutateShared({ status: AsyncOperationStatus.IN_PROGRESS, error: null });
+		const [error, shared] = await request<ResponseList<Scenario>>('/api/scenarios/shared');
+		mutateShared({
+			status: shared ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+			ids: shared ? shared.data.map((s) => s.id) : [],
+			data: shared
+				? shared.data.reduce(
+						(acc, s) => ({
+							...acc,
+							[s.id]: scenarioToVM(s)
+						}),
+						{}
+				  )
+				: {},
+			total: shared ? shared.total : 0,
+			perPage: shared ? shared.perPage : 0,
 			error
 		});
 	},
@@ -147,10 +191,10 @@ export const scenarios = {
 			error
 		});
 		if (scenario) {
-			mutateList({
-				ids: [scenario.id, ...state.list.ids],
+			mutateMy({
+				ids: [scenario.id, ...state.my.ids],
 				data: {
-					...state.list.data,
+					...state.my.data,
 					[scenario.id]: scenarioToVM(scenario)
 				}
 			});
@@ -197,8 +241,8 @@ export const scenarios = {
 			error
 		});
 		if (scenario) {
-			mutateList({
-				data: { ...state.list.data, [scenario.id]: scenarioToVM(scenario) }
+			mutateMy({
+				data: { ...state.my.data, [scenario.id]: scenarioToVM(scenario) }
 			});
 			toastStore.trigger({
 				message: 'Scenario saved successfully',
@@ -222,7 +266,7 @@ export const scenarios = {
 		) {
 			return;
 		}
-		const scenario = state.list.data[id];
+		const scenario = state.my.data[id];
 		if (!scenario) {
 			toastStore.trigger({
 				message: `Scenario "${id}" not found`,
@@ -255,9 +299,9 @@ export const scenarios = {
 							background: 'variant-filled-warning'
 						});
 					} else {
-						const { [id]: _, ...rest } = state.list.data;
-						mutateList({
-							ids: state.list.ids.filter((i) => i !== id),
+						const { [id]: _, ...rest } = state.my.data;
+						mutateMy({
+							ids: state.my.ids.filter((i) => i !== id),
 							data: rest
 						});
 						toastStore.trigger({
@@ -278,18 +322,23 @@ function init() {
 		return;
 	}
 	if (document.cookie.includes(USER_ID_COOKIE_NAME)) {
-		scenarios.fetchList();
+		scenarios.fetchMy();
+		scenarios.fetchShared();
 	}
 
 	auth.onAuthStateChange((user) => {
 		if (user) {
 			const state = get(scenarios);
-			if (state.list.status === AsyncOperationStatus.IDLE) {
+			if (state.my.status === AsyncOperationStatus.IDLE) {
 				// to avoid double fetch
-				scenarios.fetchList();
+				scenarios.fetchMy();
+			}
+			if (state.shared.status === AsyncOperationStatus.IDLE) {
+				// to avoid double fetch
+				scenarios.fetchShared();
 			}
 		} else {
-			mutate(initialValue);
+			mutate(getInitialValue());
 		}
 	});
 }

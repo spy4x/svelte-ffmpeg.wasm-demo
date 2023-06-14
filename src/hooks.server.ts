@@ -13,6 +13,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = user;
 	event.locals.session = session;
 	const result = await resolve(event);
+	result.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+	result.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
 	console.log(event.request.method, event.request.url, result.status, Date.now() - start + 'ms');
 	dev && console.log('\n\n');
 	return result;
