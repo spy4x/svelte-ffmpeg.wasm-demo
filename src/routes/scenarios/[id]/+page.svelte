@@ -426,7 +426,7 @@
 
 					<button class="btn variant-filled-primary">
 						{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}
-							<Loading />
+							<Loading isIcon={true} />
 						{:else}
 							Save
 						{/if}

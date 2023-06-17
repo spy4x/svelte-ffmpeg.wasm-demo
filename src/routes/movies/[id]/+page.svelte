@@ -446,7 +446,7 @@
 
 							<button class="ml-auto btn variant-filled-primary">
 								{#if $movies.operations[movie.id]?.type === EntityOperationType.UPDATE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
-									<Loading />
+									<Loading isIcon={true} />
 								{:else}
 									Save
 								{/if}
