@@ -1,8 +1,8 @@
-import { auth, setSession } from '@server';
 import { Prisma } from '@prisma/client';
+import { auth, setSession } from '@server';
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { z } from 'zod';
 import { QueryError } from 'prisma-error-enum';
+import { z } from 'zod';
 
 const POST_PAYLOAD = z.object({
 	email: z.string().email().max(50),

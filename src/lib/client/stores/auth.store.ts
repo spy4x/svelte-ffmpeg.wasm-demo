@@ -127,7 +127,7 @@ export const auth = {
 			return true;
 		}
 	},
-	onAuthStateChange: (cb: (user: null | AuthUser) => void): ()=>void => {
+	onAuthStateChange: (cb: (user: null | AuthUser) => void): (() => void) => {
 		onAuthStateChangeSubscribers.push(cb);
 		return () => {
 			// unsubscribe
@@ -135,7 +135,7 @@ export const auth = {
 			if (index !== -1) {
 				onAuthStateChangeSubscribers.splice(index, 1);
 			}
-		}
+		};
 	},
 	signInWithGoogleURL: '/api/users/google',
 	signInWithFacebookURL: '/api/users/facebook'

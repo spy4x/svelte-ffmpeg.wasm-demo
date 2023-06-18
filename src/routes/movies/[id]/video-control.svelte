@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { VideoStatus, type ClipVM } from '@shared';
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { type MovieClipVM, VideoStatus } from '@shared';
 
-	export let clip: MovieClipVM;
+	export let clip: ClipVM;
 	export let index: number;
 
 	const dispatch = createEventDispatcher();
@@ -14,7 +14,7 @@
 	let recordingStartedAt = 0;
 
 	onMount(() => {
-		if (clip.status === VideoStatus.IDLE && !clip.blob && clip.url) {
+		if (clip.status === VideoStatus.IDLE && !clip.file && clip.url) {
 			videoEl.src = clip.url;
 		}
 	});
@@ -56,12 +56,12 @@
 
 		recorder.stop();
 		await stopped;
-		clip.blob = new Blob(recordedChunks, {
+		clip.file = new Blob(recordedChunks, {
 			type: 'video/webm'
 		});
-		clip.mimeType = clip.blob.type;
+		clip.mimeType = clip.file.type;
 		videoEl.srcObject = null;
-		videoEl.src = URL.createObjectURL(clip.blob);
+		videoEl.src = URL.createObjectURL(clip.file);
 		clip.status = VideoStatus.FINISHED;
 		clip.durationSec = recordingStartedAt ? (Date.now() - recordingStartedAt) / 1000 : 0;
 		dispatch('recorded', { index, clip });
@@ -87,7 +87,8 @@
 	<div class="flex gap-2">
 		{#if clip.url && clip.status === VideoStatus.IDLE}
 			<button on:click={record} class="btn variant-filled-secondary w-48">
-				<span class="text-white">Re-record</span> </button>
+				<span class="text-white">Re-record</span>
+			</button>
 		{/if}
 		{#if clip.status === VideoStatus.RECORDING}
 			<button on:click={stopRecording} class="btn variant-filled-warning w-48">

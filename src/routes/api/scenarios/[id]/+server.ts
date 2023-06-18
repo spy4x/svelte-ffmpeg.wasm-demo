@@ -1,54 +1,16 @@
-import { APP_URL, SUPABASE_PROJECT_URL } from '$env/static/private';
-import { Role, ScenarioAccess, type Scenario } from '@prisma/client';
-import { prisma, supabase } from '@server';
-import { formDataToScenario, ScenarioUpdateSchema } from '@shared';
+import { getFileUrlByPath, prisma, type GetFileURLByPathResult } from '@server';
+import { ScenarioCommandSchema, ScenarioSchema } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
-
-type UploadResult =
-	| { fileId: string; path: string; url: string; error: null }
-	| { fileId: string; path: null; url: null; error: Error };
-
-async function uploadScenarioPart(
-	userId: string,
-	scenarioId: string,
-	fileId: string,
-	file: File
-): Promise<UploadResult> {
-	const path = `users/${userId}/scenarios/${scenarioId}/${fileId}`;
-	const { data: uploadData, error: uploadError } = await supabase.storage
-		.from('media')
-		.upload(path, file, {
-			contentType: file.type,
-			upsert: true
-		});
-	// console.log({ index, uploadData, uploadError });
-	if (uploadError) {
-		return { fileId, path: null, url: null, error: uploadError };
-	}
-	const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-		.from('media')
-		.createSignedUrl(path, 3156000000); // 100 years
-	// console.log({ index, signedUrlData, signedUrlError });
-	if (signedUrlError) {
-		return { fileId, path: null, url: null, error: signedUrlError };
-	}
-	const url = signedUrlData.signedUrl.replace(
-		SUPABASE_PROJECT_URL + '/storage/v1/object/sign/media/',
-		APP_URL + '/api/media/'
-	);
-	return { fileId, path, url, error: null };
-}
 
 const PREVIEW_FILE_ID = 'preview';
 
-export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
+export const PATCH: RequestHandler = async ({ locals, request }) => {
 	if (!locals.user) {
 		return json({ message: 'Not signed in' }, { status: 401 });
 	}
 	const userId = locals.user.id;
-	const payload = await request.formData();
-	const formDataScenario = formDataToScenario(payload);
-	const parseResult = ScenarioUpdateSchema.safeParse(formDataScenario);
+	const payload = await request.json();
+	const parseResult = ScenarioCommandSchema.safeParse(payload);
 	if (!parseResult.success) {
 		return json(
 			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
@@ -57,23 +19,23 @@ export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
 	}
 	const scenario = parseResult.data;
 	const scenarioInDB = await prisma.scenario.findFirst({
-		where: { id: scenario.id, userId: locals.user.id }
+		where: { id: scenario.id, userId }
 	});
 	if (!scenarioInDB) {
 		return json({ message: 'Scenario not found' }, { status: 404 });
 	}
 	try {
-		const promises: Promise<UploadResult>[] = [];
+		const promises: Promise<GetFileURLByPathResult>[] = [];
 
-		if (scenario.previewFile) {
-			promises.push(uploadScenarioPart(userId, scenario.id, PREVIEW_FILE_ID, scenario.previewFile));
+		if (scenario.previewPath) {
+			promises.push(getFileUrlByPath(scenario.previewPath, PREVIEW_FILE_ID));
 		}
 
-		scenario.attachments.forEach(async (attachment, index) => {
-			if (!attachment.file) {
+		scenario.attachments.forEach(async (attachment) => {
+			if (!attachment.path) {
 				return;
 			}
-			promises.push(uploadScenarioPart(userId, scenario.id, attachment.id, attachment.file));
+			promises.push(getFileUrlByPath(attachment.path, attachment.id));
 		});
 
 		const results = await Promise.all(promises);
@@ -84,36 +46,26 @@ export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
 				.forEach((r) =>
 					console.error({
 						fileId: r.fileId,
+						path: r.path,
 						error: r.error
 					})
 				);
 			// TODO: is there a better way to handle this situation?
-			return json({ message: 'Server error' }, { status: 500 });
+			return json({ message: 'Server error - Files upload' }, { status: 500 });
 		}
 
 		results.forEach((r) => {
 			if (r.fileId === PREVIEW_FILE_ID) {
 				scenario.previewURL = r.url;
 			} else {
-				scenario.attachments.find((a) => a.id === r.fileId)!.url = r.url;
+				const attachment = scenario.attachments.find((a) => a.id === r.fileId);
+				if (attachment) {
+					attachment.url = r.url;
+				}
 			}
 		});
 
-		const attachmentsWithoutFiles = scenario.attachments.map((attachment) => {
-			const { file, ...rest } = attachment;
-			return rest;
-		});
-		const scenarioWithoutPreviewFile = {
-			...scenario,
-			previewFile: undefined
-		};
-		const update: Partial<Scenario> = {
-			...scenarioWithoutPreviewFile,
-			attachments: attachmentsWithoutFiles,
-			userId: locals.user.userId,
-			access:
-				locals.user.role === Role.ADMIN ? scenarioWithoutPreviewFile.access : ScenarioAccess.PRIVATE
-		};
+		const update = { ...ScenarioSchema.parse(scenario), userId: locals.user.userId };
 
 		const updatedScenario = await prisma.scenario.update({
 			where: {
@@ -123,18 +75,8 @@ export const PATCH: RequestHandler = async ({ locals, request, cookies }) => {
 		});
 		return json(updatedScenario);
 	} catch (error: unknown) {
-		// if (error instanceof Prisma.PrismaClientKnownRequestError) {
-		// 	if (error.code === QueryError.UniqueConstraintViolation) {
-		// 		return json(
-		// 			{
-		// 				message: 'The provided email is already in use.'
-		// 			},
-		// 			{ status: 401 }
-		// 		);
-		// 	}
-		// }
 		console.error(error);
-		return json({ message: 'Server Error' }, { status: 500 });
+		return json({ message: 'Server Error - Save to DB' }, { status: 500 });
 	}
 };
 
@@ -155,16 +97,6 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 		});
 		return json({ message: 'deleted' });
 	} catch (error: unknown) {
-		// if (error instanceof Prisma.PrismaClientKnownRequestError) {
-		// 	if (error.code === QueryError.UniqueConstraintViolation) {
-		// 		return json(
-		// 			{
-		// 				message: 'The provided email is already in use.'
-		// 			},
-		// 			{ status: 401 }
-		// 		);
-		// 	}
-		// }
 		console.error(error);
 		return json({ message: 'Server Error' }, { status: 500 });
 	}

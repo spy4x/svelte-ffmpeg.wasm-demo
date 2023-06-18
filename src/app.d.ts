@@ -19,7 +19,7 @@ declare global {
 	namespace Lucia {
 		type Auth = import('@server').Auth;
 		type UserAttributes = {
-			role: import('@prisma/client').Role;
+			role?: import('@prisma/client').Role;
 			email?: string;
 			firstName?: string;
 			lastName?: string;

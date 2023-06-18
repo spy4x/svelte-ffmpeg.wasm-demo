@@ -1,5 +1,5 @@
 <script lang="ts">
-	import {AppBar, Avatar} from '@skeletonlabs/skeleton';
+	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
 	import { AuthOperation, auth } from '@stores';
 	import { toastStore } from '@skeletonlabs/skeleton';
 	import { goto } from '$app/navigation';

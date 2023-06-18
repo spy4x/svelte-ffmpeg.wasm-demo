@@ -1,22 +1,13 @@
 <script lang="ts">
-	import { scenarios } from '@stores';
 	import { Loading } from '@components';
-	import { AsyncOperationStatus, EntityOperationType, type ScenarioCreate } from '@shared';
-	import { generateRandomString } from 'lucia-auth';
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import {AppBar} from "@skeletonlabs/skeleton";
+	import { AsyncOperationStatus, EntityOperationType, ScenarioVMSchema } from '@shared';
+	import { scenarios } from '@stores';
 
-	const scenario: ScenarioCreate = {
-		id: generateRandomString(15),
-		title: '',
-		description: '',
-		attachments: [],
-		actors: [],
-		scenes: [{
-			description: ''
-		}]
-	};
+	import { goto } from '$app/navigation';
+	import { AppBar } from '@skeletonlabs/skeleton';
+	import { onMount } from 'svelte';
+
+	const scenario = ScenarioVMSchema.parse({});
 
 	onMount(() => {
 		const unsubscribe = scenarios.subscribe(($scenarios) => {
@@ -37,7 +28,14 @@
 	<AppBar class="w-full" background="transparent" padding="py-10 sm:px-4">
 		<svelte:fragment slot="lead">
 			<a class="hover:opacity-50" href="/scenarios">
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 lg:h-12 lg:w-12 lg:mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-8 w-8 mr-2 lg:h-12 lg:w-12 lg:mr-4"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
 				</svg>
 			</a>

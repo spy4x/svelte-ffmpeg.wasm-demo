@@ -53,10 +53,12 @@
 									<video src={movie.videoURL} class="rounded-t-3xl w-full h-48" controls>
 										<track kind="captions" />
 									</video>
-								{:else if $scenarios.getById(movie.scenarioId)?.previewURL}
-									<div class="rounded-t-3xl w-full h-48 bg-center bg-no-repeat bg-cover"
-										 style="background-image: url('{$scenarios.getById(movie.scenarioId)?.previewURL}')"
-									></div>
+								{:else if movie.scenarioId && $scenarios.getById(movie.scenarioId)?.previewURL}
+									<div
+										class="rounded-t-3xl w-full h-48 bg-center bg-no-repeat bg-cover"
+										style="background-image: url('{$scenarios.getById(movie.scenarioId)
+											?.previewURL}')"
+									/>
 								{:else}
 									<div class="flex items-center justify-center h-48 rounded-t-3xl bg-black/25">
 										<span class="opacity-60">No preview</span>

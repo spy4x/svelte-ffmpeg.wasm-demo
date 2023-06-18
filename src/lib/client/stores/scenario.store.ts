@@ -1,30 +1,31 @@
-import { request, requestMultipartFormData, type RequestHelperError } from './helpers';
+import { request, type RequestHelperError } from './helpers';
 import {
 	AsyncOperationStatus,
 	USER_ID_COOKIE_NAME,
-	type ScenarioCreate,
-	type ScenarioUpdate,
 	type ScenarioDelete,
 	type ResponseList,
 	EntityOperationType,
-	scenarioToFormData
+	type ScenarioVM,
+	ScenarioVMSchema,
+	ScenarioCommandSchema
 } from '@shared';
 import { browser } from '$app/environment';
 import type { Scenario } from '@prisma/client';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import { auth } from './auth.store';
 import { toastStore } from '@skeletonlabs/skeleton';
+import { uploadFile } from '@client/services';
 
 export interface ScenarioOperation {
 	type: EntityOperationType;
-	payload: ScenarioCreate | ScenarioUpdate | ScenarioDelete;
+	payload: ScenarioVM | ScenarioDelete;
 	status: AsyncOperationStatus;
 	error: null | RequestHelperError;
 }
 
 interface ListDataState {
 	ids: string[];
-	data: { [id: string]: ScenarioUpdate };
+	data: { [id: string]: ScenarioVM };
 	total: number;
 	perPage: number;
 	status: AsyncOperationStatus;
@@ -38,7 +39,7 @@ interface DataState {
 }
 
 export interface ListViewState {
-	data: ScenarioUpdate[];
+	data: ScenarioVM[];
 	status: AsyncOperationStatus;
 	error: null | RequestHelperError;
 }
@@ -47,7 +48,7 @@ interface ViewState {
 	my: ListViewState;
 	shared: ListViewState;
 	operations: { [id: string]: ScenarioOperation };
-	getById: (id: null | string) => null | Scenario;
+	getById: (id: string) => null | ScenarioVM;
 	getOperationById: (id: string) => null | ScenarioOperation;
 }
 
@@ -103,16 +104,17 @@ const viewStore = derived<Writable<DataState>, ViewState>(dataStore, (state) => 
 		error: state.shared.error
 	},
 	operations: state.operations,
-	getById: (id: null | string) => state.my.data[id] || state.shared.data[id] || null,
+	getById: (id: string) => state.my.data[id] || state.shared.data[id] || null,
 	getOperationById: (id: string) => state.operations[id]
 }));
 
-function scenarioToVM(scenario: Scenario): ScenarioUpdate {
-	return {
-		...scenario,
-		previewFile: null,
-		previewURL: scenario.previewURL || null
-	};
+function scenarioToVM(scenario: Scenario): ScenarioVM {
+	const parseResult = ScenarioVMSchema.safeParse(scenario);
+	if (!parseResult.success) {
+		console.error(parseResult.error);
+		throw parseResult.error;
+	}
+	return parseResult.data;
 }
 
 export const scenarios = {
@@ -165,10 +167,10 @@ export const scenarios = {
 			error
 		});
 	},
-	create: async (data: ScenarioCreate): Promise<void> => {
+	create: async (scenario: ScenarioVM): Promise<void> => {
 		const state = get(dataStore);
 		// add create operation to operations if operation with same id does not exists
-		const existingOperation = state.operations[data.id];
+		const existingOperation = state.operations[scenario.id];
 		if (
 			existingOperation &&
 			existingOperation.type === EntityOperationType.CREATE &&
@@ -177,25 +179,36 @@ export const scenarios = {
 			return;
 		}
 
-		mutateOperation(data.id, {
+		mutateOperation(scenario.id, {
 			type: EntityOperationType.CREATE,
-			payload: data,
+			payload: scenario,
 			status: AsyncOperationStatus.IN_PROGRESS,
 			error: null
 		});
 
-		const [error, scenario] = await request<Scenario>('/api/scenarios', 'POST', data);
+		const parseResult = ScenarioCommandSchema.safeParse(scenario);
+		if (!parseResult.success) {
+			console.error(parseResult.error);
+			mutateOperation(scenario.id, {
+				status: AsyncOperationStatus.ERROR,
+				error: { status: 501, body: parseResult.error }
+			});
+			return;
+		}
+		const payload = parseResult.data;
+
+		const [error, createdScenario] = await request<Scenario>('/api/scenarios', 'POST', payload);
 		// update operation status
-		mutateOperation(data.id, {
+		mutateOperation(scenario.id, {
 			status: scenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
-		if (scenario) {
+		if (createdScenario) {
 			mutateMy({
 				ids: [scenario.id, ...state.my.ids],
 				data: {
 					...state.my.data,
-					[scenario.id]: scenarioToVM(scenario)
+					[scenario.id]: scenarioToVM(createdScenario)
 				}
 			});
 			toastStore.trigger({
@@ -209,10 +222,10 @@ export const scenarios = {
 			});
 		}
 	},
-	update: async (data: ScenarioUpdate): Promise<void> => {
+	update: async (scenario: ScenarioVM): Promise<void> => {
 		const state = get(dataStore);
 		// add update operation to operations if operation with same id does not exists
-		const existingOperation = state.operations[data.id];
+		const existingOperation = state.operations[scenario.id];
 		if (
 			existingOperation &&
 			existingOperation.type === EntityOperationType.UPDATE &&
@@ -221,28 +234,107 @@ export const scenarios = {
 			return;
 		}
 
-		mutateOperation(data.id, {
+		mutateOperation(scenario.id, {
 			type: EntityOperationType.UPDATE,
-			payload: data,
+			payload: scenario,
 			status: AsyncOperationStatus.IN_PROGRESS,
 			error: null
 		});
 
-		const formData = scenarioToFormData(data);
+		// Detect files to be uploaded (preview, attachments)
+		const wasPreviewChanged = !!scenario.previewFile;
+		const changedAttachments = scenario.attachments.filter((a) => a.file);
+		const attachmentsChangedIds = changedAttachments.map((a) => a.id);
 
-		const [error, scenario] = await requestMultipartFormData<Scenario>(
-			`/api/scenarios/${data.id}`,
+		if (wasPreviewChanged || attachmentsChangedIds.length) {
+			// request upload signed URLs
+			const [error, result] = await request<{
+				preview: { path: string; token: string };
+				attachments: { id: string; path: string; token: string }[];
+			}>(`/api/scenarios/${scenario.id}/uploads`, 'GET', {
+				preview: wasPreviewChanged,
+				attachments: attachmentsChangedIds
+			});
+
+			if (error) {
+				mutateOperation(scenario.id, {
+					status: AsyncOperationStatus.ERROR,
+					error
+				});
+				return;
+			}
+
+			// Upload the changed files (preview, attachments)
+
+			const uploadPromises = [];
+			if (wasPreviewChanged && result.preview && scenario.previewFile) {
+				uploadPromises.push(
+					uploadFile(result.preview.path, result.preview.token, scenario.previewFile)
+				);
+			}
+			if (result.attachments.length) {
+				result.attachments.forEach((a) => {
+					const attachment = scenario.attachments.find((attachment) => attachment.id === a.id);
+					if (attachment?.file) {
+						uploadPromises.push(uploadFile(a.path, a.token, attachment.file));
+					}
+				});
+			}
+
+			const uploadResults = await Promise.all(uploadPromises);
+
+			// check if any errors - log them and stop
+			const uploadErrors = uploadResults.filter((r) => r.error);
+			if (uploadErrors.length) {
+				console.error(uploadErrors);
+				mutateOperation(scenario.id, {
+					status: AsyncOperationStatus.ERROR,
+					error: {
+						status: 500,
+						body: uploadErrors[0].error ? uploadErrors[0].error : { message: 'Upload error' }
+					}
+				});
+				return;
+			}
+
+			// update scenario with URLs of uploaded files
+			if (wasPreviewChanged) {
+				scenario.previewPath = result.preview.path;
+			}
+			if (result.attachments.length) {
+				result.attachments.forEach((a) => {
+					const attachment = scenario.attachments.find((attachment) => attachment.id === a.id);
+					if (attachment) {
+						attachment.path = a.path;
+					}
+				});
+			}
+		}
+
+		const parseResult = ScenarioCommandSchema.safeParse(scenario);
+		if (!parseResult.success) {
+			console.error(parseResult.error);
+			mutateOperation(scenario.id, {
+				status: AsyncOperationStatus.ERROR,
+				error: { status: 501, body: parseResult.error }
+			});
+			return;
+		}
+		const payload = parseResult.data;
+
+		const [error, updatedScenario] = await request<Scenario>(
+			`/api/scenarios/${scenario.id}`,
 			'PATCH',
-			formData
+			payload
 		);
 		// update operation status
-		mutateOperation(data.id, {
-			status: scenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+		mutateOperation(scenario.id, {
+			status: updatedScenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
-		if (scenario) {
+		if (updatedScenario) {
 			mutateMy({
-				data: { ...state.my.data, [scenario.id]: scenarioToVM(scenario) }
+				data: { ...state.my.data, [updatedScenario.id]: scenarioToVM(updatedScenario) }
 			});
 			toastStore.trigger({
 				message: 'Scenario saved successfully',
@@ -299,10 +391,10 @@ export const scenarios = {
 							background: 'variant-filled-warning'
 						});
 					} else {
-						const { [id]: _, ...rest } = state.my.data;
+						delete state.my.data[id];
 						mutateMy({
 							ids: state.my.ids.filter((i) => i !== id),
-							data: rest
+							data: state.my.data
 						});
 						toastStore.trigger({
 							message: 'Scenario deleted successfully',

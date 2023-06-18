@@ -3,22 +3,23 @@
 	import { page } from '$app/stores';
 	import { CopyLink, Loading } from '@components';
 	import { createFFmpeg } from '@ffmpeg/ffmpeg';
-	import type { Scenario } from '@prisma/client';
 	import {
 		AsyncOperationStatus,
 		EntityOperationType,
-		type MovieVM,
 		VideoStatus,
-		type MovieClipVM
+		getRandomString,
+		type ClipVM,
+		type MovieVM,
+		type ScenarioVM
 	} from '@shared';
-	import {AppBar, Avatar, toastStore} from '@skeletonlabs/skeleton';
+	import { AppBar, Avatar, toastStore } from '@skeletonlabs/skeleton';
 	import { movies, scenarios } from '@stores';
 	import { onMount } from 'svelte';
 	import VideoControl from './video-control.svelte';
 
 	let id: string;
 	let movie: MovieVM;
-	let scenario: null | Scenario;
+	let scenario: null | ScenarioVM;
 	let _isAdvancedMode = false;
 
 	$: showMoreUI = (movie && !movie.scenarioId) || _isAdvancedMode;
@@ -48,20 +49,20 @@
 					return;
 				}
 				const clone = structuredClone(sc);
-				const clips: MovieClipVM[] = clone.clips.map((c) => {
-					const mc = c as unknown as MovieClipVM;
+				const clips: ClipVM[] = clone.clips.map((c) => {
+					const mc = c as unknown as ClipVM;
 					return {
 						...mc,
 						actor: typeof mc.actor === 'number' ? mc.actor : null,
 						status: VideoStatus.IDLE,
-						wasFileChanged: false,
 						durationSec: mc.durationSec ?? 0
 					};
 				});
-				movie = { ...clone, clips, videoBlob: null };
+				movie = { ...clone, clips, videoFile: null, videoPath: null };
 
-				scenario = $scenarios.getById(movie.scenarioId);
-				if (!movie.scenarioId) {
+				if (movie.scenarioId) {
+					scenario = $scenarios.getById(movie.scenarioId);
+				} else {
 					_isAdvancedMode = true;
 				}
 			}
@@ -69,7 +70,7 @@
 		return unsubscribe;
 	});
 
-	let finalVideo: null | MovieClipVM = null;
+	let finalVideo: null | ClipVM = null;
 	let finalVideoStatus: VideoStatus = VideoStatus.IDLE;
 
 	async function merge() {
@@ -77,10 +78,11 @@
 		movie.durationSec = 0;
 		const ffmpeg = createFFmpeg({ log: true });
 		await ffmpeg.load();
-		ffmpeg.setProgress((event) => {
-			const time: number = (event as any).time;
+		ffmpeg.setProgress((eventWithWrongTypes) => {
+			const event = eventWithWrongTypes as unknown as { ratio: number; time: number };
+			const time: number = event.time;
 			if (time) {
-				movie!.durationSec = time;
+				movie.durationSec = time;
 			} else if (event.ratio === 1) {
 				finalVideoStatus = VideoStatus.FINISHED;
 			}
@@ -97,7 +99,10 @@
 			const clips = movie.clips as unknown as MovieVM['clips'];
 			const clip = clips[i];
 			const path = `${i}.webm`;
-			const data = new Uint8Array(await clip.blob!.arrayBuffer());
+			if (!clip.file) {
+				throw new Error('Clip file not found');
+			}
+			const data = new Uint8Array(await clip.file.arrayBuffer());
 			ffmpeg.FS('writeFile', path, data);
 			filesTxtContent += `file '${path}'\n`;
 		}
@@ -107,20 +112,39 @@
 		const data = ffmpeg.FS('readFile', outputFilePath);
 		const blob = new Blob([data.buffer], { type: 'video/mp4' });
 		finalVideo = {
+			id: 'final',
 			actor: null,
 			description: '',
 			mimeType: 'video/mp4',
-			blob,
+			file: blob,
+			path: null,
 			url: URL.createObjectURL(blob),
 			status: VideoStatus.FINISHED,
 			durationSec: movie?.durationSec
 		};
-		movie.videoBlob = blob;
+		movie.videoFile = blob;
 		finalVideoStatus = VideoStatus.FINISHED;
 	}
 
 	function deleteClip(index: number): void {
 		movie.clips = movie.clips.filter((_, i) => i !== index);
+	}
+
+	function addClip() {
+		movie.clips = [
+			...movie.clips,
+			{
+				id: getRandomString(),
+				actor: null,
+				description: '',
+				status: VideoStatus.IDLE,
+				path: null,
+				file: null,
+				url: null,
+				durationSec: 0,
+				mimeType: null
+			}
+		];
 	}
 </script>
 
@@ -322,7 +346,9 @@
 									<div class="flex flex-col gap-3 items-center">
 										<Avatar
 											initials={typeof clip.actor === 'number'
-												? scenario?.actors[clip.actor]
+												? scenario?.actors[clip.actor] ??
+												  movie?.actors[clip.actor] ??
+												  '---No actor---'
 												: '---No actor---'}
 											width="w-9 lg:w-12"
 										/>
@@ -367,7 +393,9 @@
 										{:else}
 											<p class="font-bold">
 												{typeof clip.actor === 'number'
-													? scenario?.actors[clip.actor]
+													? scenario?.actors[clip.actor] ??
+													  movie?.actors[clip.actor] ??
+													  '---No actor---'
 													: '---No actor---'}
 											</p>
 										{/if}
@@ -391,7 +419,9 @@
 									<div class="flex flex-col gap-3 items-center">
 										<Avatar
 											initials={typeof clip.actor === 'number'
-												? scenario?.actors[clip.actor]
+												? scenario?.actors[clip.actor] ??
+												  movie?.actors[clip.actor] ??
+												  '---No actor---'
 												: '---No actor---'}
 											width="w-9 lg:w-12"
 										/>
@@ -431,15 +461,7 @@
 					<div class="lg:col-start-2 lg:col-span-2">
 						<div class="flex items-center p-4 lg:p-8 variant-glass-surface rounded-3xl">
 							{#if showMoreUI}
-								<button
-									on:click={() =>
-										(movie.clips = [
-											...movie.clips,
-											{ actor: movie.actors[0], description: '', status: VideoStatus.IDLE }
-										])}
-									type="button"
-									class="btn variant-ghost-surface"
-								>
+								<button on:click={addClip} type="button" class="btn variant-ghost-surface">
 									Add clip
 								</button>
 							{/if}

@@ -1,6 +1,6 @@
 import { Role, type Prisma, type Scenario, ScenarioAccess } from '@prisma/client';
 import { prisma } from '@server';
-import { ScenarioCreateSchema, type ResponseList } from '@shared';
+import { ScenarioSchema, type ResponseList } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -27,12 +27,12 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	return json(result);
 };
 
-export const POST: RequestHandler = async ({ locals, request, cookies }) => {
+export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!locals.user) {
 		return json({ message: 'Not signed in' }, { status: 401 });
 	}
 	const payload = await request.json();
-	const parseResult = ScenarioCreateSchema.safeParse(payload);
+	const parseResult = ScenarioSchema.safeParse(payload);
 	if (!parseResult.success) {
 		return json(
 			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },

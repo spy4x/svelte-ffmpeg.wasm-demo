@@ -29,8 +29,8 @@ export const GET: RequestHandler = async ({ cookies, url, locals }) => {
 			console.log('creating user...');
 			return await createUser({
 				email: providerUser.email,
-				firstName: providerUser.given_name,
-				lastName: providerUser.family_name,
+				firstName: providerUser.name.split(' ')[0],
+				lastName: providerUser.name.split(' ')[1],
 				photoURL: providerUser.picture
 			});
 		};

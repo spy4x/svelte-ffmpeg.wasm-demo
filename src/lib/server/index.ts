@@ -1,3 +1,3 @@
 export * from './lucia';
 export * from './prisma';
-export * from './supabase';
+export * from './storage';

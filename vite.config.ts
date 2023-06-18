@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 
 config();
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
 	return {
 		plugins: [sveltekit()],
 		test: {
@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
 		server: {
 			proxy: {
 				'^/api/media/.*': {
-					target: `${process.env.SUPABASE_PROJECT_URL}/storage/v1/object/sign/media`,
+					target: `${process.env.PUBLIC_SUPABASE_PROJECT_URL}/storage/v1/object/sign/media`,
 					changeOrigin: true,
 					secure: true,
 					rewrite: (path) => path.replace(/^\/api\/media/, '')

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { auth, movies, scenarios, type ListViewState } from '@stores';
-	import { Loading, Debug } from '@components';
-	import { AsyncOperationStatus, EntityOperationType } from '@shared';
-	import { format } from 'date-fns';
-	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
-	import { generateRandomString } from 'lucia-auth';
 	import { goto } from '$app/navigation';
+	import { Loading } from '@components';
+	import { AsyncOperationStatus, EntityOperationType } from '@shared';
+	import { AppBar, Avatar } from '@skeletonlabs/skeleton';
+	import { auth, movies, scenarios, type ListViewState } from '@stores';
+	import { format } from 'date-fns';
+	import { generateRandomString } from 'lucia-auth';
 
 	export let state: ListViewState;
 	export let access: 'PRIVATE' | 'SHARED';

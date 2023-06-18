@@ -1,20 +1,23 @@
 import { browser } from '$app/environment';
+import { uploadFile } from '@client/services';
 import type { Movie } from '@prisma/client';
 import {
 	AsyncOperationStatus,
+	ClipVMSchema,
 	EntityOperationType,
+	MovieVMSchema,
 	USER_ID_COOKIE_NAME,
 	VideoStatus,
-	movieToFormData,
+	getRandomString,
 	type MovieDelete,
 	type MovieVM,
 	type ResponseList,
-	type ScenarioCreate
+	MovieCommandSchema
 } from '@shared';
 import { toastStore } from '@skeletonlabs/skeleton';
 import { derived, get, writable, type Writable } from 'svelte/store';
 import { auth } from './auth.store';
-import { request, requestMultipartFormData, type RequestHelperError } from './helpers';
+import { request, type RequestHelperError } from './helpers';
 import { scenarios } from './scenario.store';
 
 export interface MovieOperation {
@@ -107,10 +110,10 @@ export const movies = {
 			error
 		});
 	},
-	create: async (data: MovieVM): Promise<void> => {
+	create: async (movie: MovieVM): Promise<void> => {
 		const state = get(dataStore);
 		// add create operation to operations if operation with same id does not exists
-		const existingOperation = state.operations[data.id];
+		const existingOperation = state.operations[movie.id];
 		if (
 			existingOperation &&
 			existingOperation.type === EntityOperationType.CREATE &&
@@ -119,23 +122,23 @@ export const movies = {
 			return;
 		}
 
-		mutateOperation(data.id, {
+		mutateOperation(movie.id, {
 			type: EntityOperationType.CREATE,
-			payload: data,
+			payload: movie,
 			status: AsyncOperationStatus.IN_PROGRESS,
 			error: null
 		});
 
-		const [error, movie] = await request<Movie>('/api/movies', 'POST', data);
+		const [error, createdMovie] = await request<Movie>('/api/movies', 'POST', movie);
 		// update operation status
-		mutateOperation(data.id, {
-			status: movie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+		mutateOperation(movie.id, {
+			status: createdMovie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
-		if (movie) {
+		if (createdMovie) {
 			mutateList({
-				ids: [movie.id, ...state.list.ids],
-				data: { ...state.list.data, [movie.id]: movie }
+				ids: [createdMovie.id, ...state.list.ids],
+				data: { ...state.list.data, [createdMovie.id]: createdMovie }
 			});
 			toastStore.trigger({
 				message: 'Movie created successfully',
@@ -153,17 +156,7 @@ export const movies = {
 		scenarioId: null | string,
 		title?: string
 	): Promise<void> => {
-		const movie: MovieVM = {
-			id,
-			scenarioId,
-			title: title || '',
-			description: '',
-			actors: [],
-			clips: [],
-			durationSec: 0,
-			videoBlob: null,
-			videoURL: null
-		};
+		const movie = MovieVMSchema.parse({ id, scenarioId, title });
 		if (scenarioId) {
 			const scenariosState = get(scenarios);
 			const scenario = scenariosState.getById(scenarioId);
@@ -181,33 +174,27 @@ export const movies = {
 				movie.description = scenario.description;
 			}
 			movie.actors = scenario.actors;
-			movie.clips = (scenario.scenes as ScenarioCreate['scenes']).map((s) => ({
+			movie.clips = scenario.scenes.map((s) => ({
+				id: getRandomString(),
 				description: s.description,
 				actor: s.actor ?? null,
 				status: VideoStatus.IDLE,
 				durationSec: 0,
-				blob: null,
+				file: null,
+				path: null,
 				url: null,
 				mimeType: null
 			}));
 		}
 		if (!movie.clips.length) {
-			movie.clips.push({
-				description: '',
-				actor: null,
-				status: VideoStatus.IDLE,
-				durationSec: 0,
-				blob: null,
-				url: null,
-				mimeType: null
-			});
+			movie.clips.push(ClipVMSchema.parse({}));
 		}
 		await movies.create(movie);
 	},
-	update: async (data: MovieVM): Promise<void> => {
+	update: async (movie: MovieVM): Promise<void> => {
 		const state = get(dataStore);
 		// add update operation to operations if operation with same id does not exists
-		const existingOperation = state.operations[data.id];
+		const existingOperation = state.operations[movie.id];
 		if (
 			existingOperation &&
 			existingOperation.type === EntityOperationType.UPDATE &&
@@ -216,35 +203,91 @@ export const movies = {
 			return;
 		}
 
-		mutateOperation(data.id, {
+		mutateOperation(movie.id, {
 			type: EntityOperationType.UPDATE,
-			payload: data,
+			payload: movie,
 			status: AsyncOperationStatus.IN_PROGRESS,
 			error: null
 		});
 
-		const formData = movieToFormData(data);
+		// TODO: pick only changed fields (vidoe, clips)
+		const wasVideoChanged = !!movie.videoFile;
+		const clipsChangedIds = movie.clips.filter((c) => c.file).map((a) => a.id);
 
-		const [error, movie] = await requestMultipartFormData(
-			`/api/movies/${data.id}`,
-			'PATCH',
-			formData
-		);
+		if (wasVideoChanged || clipsChangedIds.length) {
+			const [error, result] = await request<{
+				video: { path: string; token: string };
+				clips: { id: string; path: string; token: string }[];
+			}>(`/api/movies/${movie.id}/uploads`, 'GET', {
+				video: wasVideoChanged,
+				clips: clipsChangedIds
+			});
+			if (error) {
+				mutateOperation(movie.id, {
+					status: AsyncOperationStatus.ERROR,
+					error
+				});
+				return;
+			}
 
-		// const [error, movie] = await requestNew<Movie>({
-		// 	url: `/api/movies/${data.id}`,
-		// 	method: 'PATCH',
-		// 	payload: data,
-		// 	trackProgress: (progress) => console.log(progress)
-		// });
+			// Upload the changed files (video, clips)
+
+			const uploadPromises = [];
+			if (wasVideoChanged && result.video && movie.videoFile) {
+				uploadPromises.push(uploadFile(result.video.path, result.video.token, movie.videoFile));
+			}
+			if (result.clips.length) {
+				result.clips.forEach((a) => {
+					const clip = movie.clips.find((clip) => clip.id === a.id);
+					if (clip?.file) {
+						uploadPromises.push(uploadFile(a.path, a.token, clip.file));
+					}
+				});
+			}
+
+			const uploadResults = await Promise.all(uploadPromises);
+
+			// check if any errors - log them and stop
+			const uploadErrors = uploadResults.filter((r) => r.error);
+			if (uploadErrors.length) {
+				console.error(uploadErrors);
+				mutateOperation(movie.id, {
+					status: AsyncOperationStatus.ERROR,
+					error: {
+						status: 500,
+						body: uploadErrors[0].error ? uploadErrors[0].error : { message: 'Upload error' }
+					}
+				});
+				return;
+			}
+
+			// update scenario with URLs of uploaded files
+			if (wasVideoChanged) {
+				movie.videoPath = result.video.path;
+			}
+			if (result.clips.length) {
+				result.clips.forEach((a) => {
+					const clip = movie.clips.find((clip) => clip.id === a.id);
+					if (clip) {
+						clip.path = a.path;
+					}
+				});
+			}
+		}
+
+		const payload = MovieCommandSchema.parse(movie);
+
+		const [error, updatedMovie] = await request<Movie>(`/api/movies/${movie.id}`, 'PATCH', payload);
+
 		// update operation status
-		mutateOperation(data.id, {
-			status: movie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
+		mutateOperation(movie.id, {
+			status: updatedMovie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
 			error
 		});
-		if (movie) {
+
+		if (updatedMovie) {
 			mutateList({
-				data: { ...state.list.data, [movie.id]: movie }
+				data: { ...state.list.data, [updatedMovie.id]: updatedMovie }
 			});
 			toastStore.trigger({
 				message: 'Movie saved successfully',
@@ -301,10 +344,11 @@ export const movies = {
 							background: 'variant-filled-warning'
 						});
 					} else {
-						const { [id]: _, ...rest } = state.list.data;
+						// delete movie from list
+						delete state.list.data[id];
 						mutateList({
 							ids: state.list.ids.filter((i) => i !== id),
-							data: rest
+							data: state.list.data
 						});
 						toastStore.trigger({
 							message: 'Movie deleted successfully',

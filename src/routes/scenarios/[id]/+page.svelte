@@ -1,15 +1,21 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Debug, Loading } from '@components';
-	import { AsyncOperationStatus, EntityOperationType, type ScenarioUpdate } from '@shared';
+	import { Loading } from '@components';
+	import {
+		AsyncOperationStatus,
+		AttachmentVMSchema,
+		EntityOperationType,
+		ScenarioAccess,
+		type ScenarioVM
+	} from '@shared';
 	import { AppBar, Avatar, FileButton, toastStore } from '@skeletonlabs/skeleton';
 	import { auth, movies, scenarios } from '@stores';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
 
 	let id: string;
-	let scenario: ScenarioUpdate;
+	let scenario: ScenarioVM;
 	let creatingMovieId = '';
 	let addSceneButton: HTMLButtonElement;
 
@@ -32,7 +38,7 @@
 					});
 					goto('/scenarios');
 				}
-				scenario = structuredClone(sc) as unknown as ScenarioUpdate;
+				scenario = structuredClone(sc) as unknown as ScenarioVM;
 			}
 		});
 		return unsubscribe;
@@ -51,7 +57,10 @@
 	function addScene() {
 		scenario.scenes = [
 			...scenario.scenes,
-			{ actor: scenario.actors[0], description: 'Directions: \n\n\nDialogue: \n\n\n' }
+			{
+				actor: scenario.actors.length ? 0 : null,
+				description: 'Directions: \n\n\nDialogue: \n\n\n'
+			}
 		];
 		// wait a moment before DOM is updated with new scene
 		setTimeout(() => addSceneButton.scrollIntoView({ behavior: 'smooth' }));
@@ -66,14 +75,24 @@
 		if (!target.files) {
 			return;
 		}
-		const files = Array.from(target.files).map((file) => ({
-			id: generateRandomString(15),
-			title: file.name,
-			url: null,
-			file
-		}));
+		const files = Array.from(target.files).map((file) =>
+			AttachmentVMSchema.parse({
+				title: file.name,
+				mimeType: file.type,
+				file
+			})
+		);
 		scenario.attachments = [...scenario.attachments, ...files];
 		target.value = '';
+	}
+
+	function toggleAccess(event: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+		scenario.access = event.currentTarget.checked ? ScenarioAccess.SHARED : ScenarioAccess.PRIVATE;
+	}
+
+	function setPreviewFile(event: Event): void {
+		const e = event as unknown as Event & { currentTarget: HTMLInputElement };
+		scenario.previewFile = e.currentTarget.files?.[0] ?? null;
 	}
 </script>
 
@@ -132,7 +151,7 @@
 							class="checkbox w-6 h-6"
 							type="checkbox"
 							checked={scenario.access === 'SHARED'}
-							on:change={(e) => (scenario.access = e.target.checked ? 'SHARED' : 'PRIVATE')}
+							on:change={toggleAccess}
 						/>
 						<p>Is public?</p>
 					</label>
@@ -202,7 +221,7 @@
 						name="previewFile"
 						accept="image/png,image/jpeg,image/svg+xml"
 						button="variant-ghost-surface w-full"
-						on:change={(e) => (scenario.previewFile = e.target.files[0])}
+						on:change={setPreviewFile}
 					>
 						{#if scenario.previewURL || scenario.previewFile}
 							Change Image

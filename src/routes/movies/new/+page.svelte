@@ -59,7 +59,7 @@
 						<span>Scenario</span>
 						<select bind:value={scenarioId} class="select" placeholder="Select movie">
 							<option value={null}>---Blank---</option>
-							{#each $scenarios.list.data as scenario}
+							{#each $scenarios.my.data as scenario}
 								<option value={scenario.id}>{scenario.title}</option>
 							{/each}
 						</select>
