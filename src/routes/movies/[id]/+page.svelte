@@ -207,7 +207,7 @@
 		<form
 			data-e2e="new-movie-form"
 			on:submit|preventDefault={() => void movies.update(movie)}
-			class="grid grid-cols-1 lg:grid-cols-3 gap-y-8 lg:gap-12 mb-24"
+			class="grid grid-cols-1 lg:grid-cols-3 gap-y-8 lg:gap-12 mb-24 lg:mb-32"
 		>
 			<div class="card p-4 lg:p-8 flex flex-col gap-5">
 				<label>
@@ -333,7 +333,7 @@
 
 			<div class="col-span-2">
 				<div class="card p-4 lg:p-8">
-					<div class="flex flex-col gap-5">
+					<div class="space-y-5">
 						<h4 class="h4">Clips:</h4>
 
 						{#each movie.clips as clip, index}
