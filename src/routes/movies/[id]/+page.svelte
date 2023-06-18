@@ -98,10 +98,10 @@
 		for (let i = 0; i < movie.clips.length; i++) {
 			const clips = movie.clips as unknown as MovieVM['clips'];
 			const clip = clips[i];
-			const path = `${i}.webm`;
-			if (!clip.file) {
+			if (!clip.file || !clip.mimeType) {
 				throw new Error('Clip file not found');
 			}
+			const path = `${i}.${clip.mimeType.split('/')[1]}`;
 			const data = new Uint8Array(await clip.file.arrayBuffer());
 			ffmpeg.FS('writeFile', path, data);
 			filesTxtContent += `file '${path}'\n`;

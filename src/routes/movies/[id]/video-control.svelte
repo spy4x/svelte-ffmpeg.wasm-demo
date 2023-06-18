@@ -12,33 +12,58 @@
 	let recordedChunks: Blob[] = [];
 	let videoEl: HTMLVideoElement;
 	let recordingStartedAt = 0;
+	const supportedMimeType = findSupportedMimeType();
 
 	onMount(() => {
+		console.log({ supportedMimeType });
 		if (clip.status === VideoStatus.IDLE && !clip.file && clip.url) {
 			videoEl.src = clip.url;
 		}
 	});
 
+	function findSupportedMimeType(): string {
+		if (!MediaRecorder || !MediaRecorder.isTypeSupported) {
+			return '';
+		}
+		const webm = 'video/webm';
+		const mp4 = 'video/mp4';
+		const isWebM = MediaRecorder.isTypeSupported(webm);
+		const isMP4 = MediaRecorder.isTypeSupported(mp4);
+		return isWebM ? webm : isMP4 ? mp4 : '';
+	}
+
 	async function record() {
 		clip.status = VideoStatus.RECORDING;
 		recordedChunks = [];
 
+		// Display video devices
+		// navigator.mediaDevices.enumerateDevices().then((devices) => {
+		// 	devices = devices.filter((d) => d.kind === 'videoinput');
+		// });
+
 		stream = await navigator.mediaDevices.getUserMedia({
-			video: true,
-			audio: true
+			audio: true,
+			video: true
+			// video: {
+			// 	deviceId: devices[0].deviceId, // selected device
+			// },
 		});
 
 		videoEl.src = '';
 		videoEl.srcObject = stream;
-		recorder = new MediaRecorder(stream);
+		recorder = new MediaRecorder(stream, {
+			mimeType: supportedMimeType
+		});
+		let index = 0;
 		recorder.addEventListener('dataavailable', function (event) {
-			if (event.data.size > 0) {
+			if (event.data && event.data.size > 0) {
 				recordedChunks.push(event.data);
+				console.log({ chunk: ++index, size: event.data.size });
 			}
 		});
 
 		// Start Recording
-		recorder.start();
+		recorder.start(1000);
 		recordingStartedAt = Date.now();
 	}
 
@@ -50,15 +75,18 @@
 		});
 
 		const stopped = new Promise((resolve, reject) => {
-			recorder.onstop = resolve;
+			recorder.onstop = () => {
+				setTimeout(() => resolve(true), 100);
+			};
 			recorder.onerror = (event) => reject(event);
 		});
 
 		recorder.stop();
 		await stopped;
 		clip.file = new Blob(recordedChunks, {
-			type: 'video/webm'
+			type: supportedMimeType
 		});
+		console.log({ size: clip.file.size, type: clip.file.type, recorderType: recorder.mimeType });
 		clip.mimeType = clip.file.type;
 		videoEl.srcObject = null;
 		videoEl.src = URL.createObjectURL(clip.file);
