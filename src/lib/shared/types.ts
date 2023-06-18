@@ -32,7 +32,17 @@ export enum ScenarioAccess {
 
 export const AttachmentSchema = z.object({
 	id: z.string().default(() => getRandomString()),
-	title: z.string().max(50).default(''),
+	title: z
+		.string()
+		.default('')
+		.transform((val) => {
+			// limit string to 50 symbols max
+			const str = val.trim();
+			if (str.length > 50) {
+				return str.slice(0, 50);
+			}
+			return str;
+		}),
 	url: z.string().nullable().default(null),
 	mimeType: z.string().max(30).nullable().default(null)
 });
@@ -46,6 +56,21 @@ export const AttachmentVMSchema = AttachmentCommandSchema.extend({
 });
 export type AttachmentVM = z.infer<typeof AttachmentVMSchema>;
 
+export const SceneSchema = z.object({
+	description: z
+		.string()
+		.default('')
+		.transform((val) => {
+			// limit string to 1000 symbols max
+			const str = val.trim();
+			if (str.length > 1000) {
+				return str.slice(0, 1000);
+			}
+			return str;
+		}),
+	actor: z.number().nullable().default(null)
+});
+
 export const ScenarioSchema = z.object({
 	id: z.string().default(() => generateRandomString(15)),
 	userId: z.string().length(15).default(''),
@@ -55,14 +80,7 @@ export const ScenarioSchema = z.object({
 	previewURL: z.string().max(400).nullable().default(null),
 	attachments: z.array(AttachmentSchema).default([]),
 	actors: z.array(z.string().max(30)).default([]),
-	scenes: z
-		.array(
-			z.object({
-				description: z.string().max(1000).default(''),
-				actor: z.number().nullable().default(null)
-			})
-		)
-		.default([]),
+	scenes: z.array(SceneSchema).default([]),
 	createdAt: z.coerce.date().default(() => new Date()),
 	updatedAt: z.coerce.date().default(() => new Date())
 });

@@ -156,7 +156,12 @@ export const movies = {
 		scenarioId: null | string,
 		title?: string
 	): Promise<void> => {
-		const movie = MovieVMSchema.parse({ id, scenarioId, title });
+		const movie = MovieVMSchema.parse({
+			id,
+			scenarioId,
+			title,
+			userId: get(auth).user?.id
+		} satisfies Partial<MovieVM>);
 		if (scenarioId) {
 			const scenariosState = get(scenarios);
 			const scenario = scenariosState.getById(scenarioId);

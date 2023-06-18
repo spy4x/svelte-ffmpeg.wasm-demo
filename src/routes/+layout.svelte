@@ -12,12 +12,12 @@
 	import { AsyncOperationStatus } from '@shared';
 	import { page } from '$app/stores';
 	import { initPopups } from '@client/services';
+	import { onMount } from 'svelte';
 
 	initPopups();
 
 	async function signOut() {
 		await auth.signOut();
-		goto('/auth');
 	}
 
 	const userProfileDropdown: PopupSettings = {
@@ -26,6 +26,15 @@
 		placement: 'bottom',
 		closeQuery: 'li'
 	};
+
+	onMount(() => {
+		const unsubscribe = auth.onAuthStateChange((user) => {
+			if (!user) {
+				goto('/auth');
+			}
+		});
+		return unsubscribe;
+	});
 </script>
 
 <!-- App Shell -->
