@@ -341,20 +341,22 @@
 					<div class="flex flex-col gap-5">
 						{#each scenario.scenes as scene, i}
 							<div
-								class="grid gap-2 {i % 2 !== 0 ? 'grid-cols-[1fr_auto]' : 'grid-cols-[auto_1fr]'}"
+								class="sm:grid gap-2 {i % 2 !== 0
+									? 'grid-cols-[1fr_auto]'
+									: 'grid-cols-[auto_1fr]'}"
 							>
 								{#if i % 2 === 0}
-									<div class="flex flex-col gap-3 items-center">
+									<div class="hidden sm:flex flex-col gap-3 items-center">
 										<Avatar
 											initials={typeof scene.actor === 'number'
 												? scenario?.actors[scene.actor]
 												: '---No actor---'}
-											width="w-9 lg:w-12"
+											width="w-12"
 										/>
 										<button
 											on:click={() => deleteScene(i)}
 											type="button"
-											class="btn-icon variant-soft-surface w-9 lg:w-12"
+											class="btn-icon variant-soft-surface w-12 h-12"
 											title="Delete scene"
 										>
 											<svg
@@ -387,6 +389,27 @@
 											{/each}
 										</select>
 										<small class="opacity-50 srink-0 whitespace-nowrap pl-3">Scene #{i + 1}</small>
+										<button
+											on:click={() => deleteScene(i)}
+											type="button"
+											class="sm:hidden btn-icon variant-soft-surface ml-3 w-12 h-12"
+											title="Delete scene"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-6 w-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												stroke-width="2"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+												/>
+											</svg>
+										</button>
 									</header>
 									<textarea
 										bind:value={scene.description}
@@ -396,17 +419,17 @@
 									/>
 								</div>
 								{#if i % 2 !== 0}
-									<div class="flex flex-col gap-3 items-center">
+									<div class="hidden sm:flex flex-col gap-3 items-center">
 										<Avatar
 											initials={typeof scene.actor === 'number'
 												? scenario?.actors[scene.actor]
 												: '---No actor---'}
-											width="w-9 lg:w-12"
+											width="w-12"
 										/>
 										<button
 											on:click={() => deleteScene(i)}
 											type="button"
-											class="btn-icon variant-soft-surface w-9 lg:w-12"
+											class="btn-icon variant-soft-surface w-12 h-12"
 											title="Delete scene"
 										>
 											<svg
