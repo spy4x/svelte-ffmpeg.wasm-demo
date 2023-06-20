@@ -21,7 +21,7 @@
 	}
 
 	const userProfileDropdown: PopupSettings = {
-		event: 'focus-click',
+		event: 'click',
 		target: 'userProfileDropdown',
 		placement: 'bottom',
 		closeQuery: 'li'
