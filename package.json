@@ -57,13 +57,16 @@
 		"vitest": "^0.25.8"
 	},
 	"lint-staged": {
-		"*.{js,ts,css,md,svelte,html,json}": [
+		"*.{ts,js,css,postcss,html,json,yaml,svelte,md}": [
 			"prettier --plugin-search-dir . --write",
+			"pnpm vitest run --silent --",
+			"pnpm check",
+			"pnpm eslint --fix",
+			"pnpm build --",
 			"git add"
 		],
-		"*.{svelte,js,ts,html}": [
-			"pnpm check",
-			"eslint --fix",
+		"schema.prisma": [
+			"pnpm prisma format",
 			"git add"
 		]
 	}
