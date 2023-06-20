@@ -1,6 +1,5 @@
-import type { Movie } from '@prisma/client';
 import { getFileUrlByPath, prisma, type GetFileURLByPathResult } from '@server';
-import { MovieCommandSchema } from '@shared';
+import { MovieCommandSchema, MovieSchema, handleValidationError } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 const MOVIE_FILE_ID = 'movie';
@@ -14,10 +13,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 
 	const parseResult = MovieCommandSchema.safeParse(payload);
 	if (!parseResult.success) {
-		return json(
-			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
-			{ status: 400 }
-		);
+		return json(handleValidationError(parseResult.error), { status: 400 });
 	}
 	const movie = parseResult.data;
 
@@ -61,25 +57,15 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 		if (r.fileId === MOVIE_FILE_ID) {
 			movie.videoURL = r.url;
 		} else {
-			movie.clips.find((c) => c.id === r.fileId)!.url = r.url;
+			const clip = movie.clips.find((c) => c.id === r.fileId);
+			if (clip) {
+				clip.url = r.url;
+			}
 		}
 	});
 
 	try {
-		const clipsWithoutPath = movie.clips.map((clip) => {
-			const { path, ...rest } = clip;
-			return rest;
-		});
-		const movieWithoutVideoPath = {
-			...movie,
-			videoPath: undefined,
-			videoFile: undefined
-		};
-		const update: Partial<Movie> = {
-			...movieWithoutVideoPath,
-			clips: clipsWithoutPath,
-			userId: locals.user.userId
-		};
+		const update = { ...MovieSchema.parse(movie), userId: locals.user.userId };
 		const updatedMovie = await prisma.movie.update({
 			where: {
 				id: movie.id

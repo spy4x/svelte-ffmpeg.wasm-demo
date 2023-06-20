@@ -1,5 +1,5 @@
 import { getFileUrlByPath, prisma, type GetFileURLByPathResult } from '@server';
-import { ScenarioCommandSchema, ScenarioSchema } from '@shared';
+import { ScenarioCommandSchema, ScenarioSchema, handleValidationError } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 const PREVIEW_FILE_ID = 'preview';
@@ -12,10 +12,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	const payload = await request.json();
 	const parseResult = ScenarioCommandSchema.safeParse(payload);
 	if (!parseResult.success) {
-		return json(
-			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
-			{ status: 400 }
-		);
+		return json(handleValidationError(parseResult.error), { status: 400 });
 	}
 	const scenario = parseResult.data;
 	const scenarioInDB = await prisma.scenario.findFirst({

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Loading } from '@components';
+	import { FormError, Loading } from '@components';
 	import {
 		AsyncOperationStatus,
 		EntityOperationType,
 		ScenarioVMSchema,
-		type ScenarioVM,
-		SceneSchema
+		SceneSchema,
+		type ScenarioVM
 	} from '@shared';
 	import { auth, scenarios } from '@stores';
 
@@ -15,6 +15,7 @@
 	import { get } from 'svelte/store';
 
 	let scenario: ScenarioVM;
+	$: operation = $scenarios.operations[scenario?.id];
 
 	onMount(() => {
 		const user = get(auth).user;
@@ -74,6 +75,7 @@
 								type="text"
 								placeholder="Enter title"
 							/>
+							<FormError error={operation?.error} field="title" />
 						</label>
 						<label>
 							<span>Description</span>
@@ -83,7 +85,9 @@
 								rows="5"
 								placeholder="Enter description"
 							/>
+							<FormError error={operation?.error} field="description" />
 						</label>
+						<FormError message={operation?.error?.message} />
 					</div>
 				</section>
 				<footer class="card-footer flex justify-end gap-3">

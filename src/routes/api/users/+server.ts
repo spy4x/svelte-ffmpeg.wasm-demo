@@ -1,13 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { auth, setSession } from '@server';
+import { AuthEmailPasswordSchema, handleValidationError } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { QueryError } from 'prisma-error-enum';
-import { z } from 'zod';
-
-const POST_PAYLOAD = z.object({
-	email: z.string().email().max(50),
-	password: z.string().min(8)
-});
 
 export const POST: RequestHandler = async ({ locals, request, cookies }) => {
 	if (locals.user) {
@@ -15,12 +10,11 @@ export const POST: RequestHandler = async ({ locals, request, cookies }) => {
 		return json(locals.user);
 	}
 	const payload = await request.json();
-	const parseResult = POST_PAYLOAD.safeParse(payload);
+	const parseResult = AuthEmailPasswordSchema.safeParse(payload);
 	if (!parseResult.success) {
-		return json(
-			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
-			{ status: 400 }
-		);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore - something weird with type imcompatibility
+		return json(handleValidationError(parseResult.error), { status: 400 });
 	}
 	const { email, password } = parseResult.data;
 

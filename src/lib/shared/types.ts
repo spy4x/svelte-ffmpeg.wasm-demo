@@ -1,8 +1,29 @@
-import { z } from 'zod';
-import { getRandomString } from './helpers';
 import { generateRandomString } from 'lucia-auth';
+import { z, type ZodTypeAny } from 'zod';
+import { getRandomString } from './helpers';
 
 // #region Common
+
+// #region Errors
+export const VALIDATION_ERROR_CODE = 'VALIDATION_ERROR';
+export const SERVER_ERROR = 'SERVER_ERROR';
+export const UNKNOWN_ERROR = 'UNKNOWN_ERROR';
+export const UPLOAD_ERROR = 'UPLOAD_ERROR';
+export interface UIError {
+	code: string;
+	message: string;
+}
+export interface RequestError extends UIError {
+	code: typeof SERVER_ERROR | typeof UNKNOWN_ERROR | typeof UPLOAD_ERROR;
+	body?: any;
+}
+
+export interface ValidationError<T extends ZodTypeAny> extends UIError {
+	code: typeof VALIDATION_ERROR_CODE;
+	errors: z.inferFlattenedErrors<T>['fieldErrors'];
+}
+// #endregion
+
 export interface ResponseList<T> {
 	data: T[];
 	total: number;
@@ -22,6 +43,20 @@ export enum EntityOperationType {
 	UPDATE = 'UPDATE',
 	DELETE = 'DELETE'
 }
+
+export interface AsyncOperation<P, E> {
+	type: EntityOperationType;
+	payload: P;
+	status: AsyncOperationStatus;
+	error: null | E;
+}
+// #endregion
+
+// #region Auth
+export const AuthEmailPasswordSchema = z.object({
+	email: z.string().email().max(50),
+	password: z.string().min(8).max(50)
+});
 // #endregion
 
 // #region Scenario
@@ -57,17 +92,7 @@ export const AttachmentVMSchema = AttachmentCommandSchema.extend({
 export type AttachmentVM = z.infer<typeof AttachmentVMSchema>;
 
 export const SceneSchema = z.object({
-	description: z
-		.string()
-		.default('')
-		.transform((val) => {
-			// limit string to 1000 symbols max
-			const str = val.trim();
-			if (str.length > 1000) {
-				return str.slice(0, 1000);
-			}
-			return str;
-		}),
+	description: z.string().max(1000).default(''),
 	actor: z.number().nullable().default(null)
 });
 

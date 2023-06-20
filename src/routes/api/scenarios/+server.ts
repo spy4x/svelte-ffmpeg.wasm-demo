@@ -1,6 +1,6 @@
 import { Role, type Prisma, type Scenario, ScenarioAccess } from '@prisma/client';
 import { prisma } from '@server';
-import { ScenarioSchema, type ResponseList } from '@shared';
+import { ScenarioSchema, type ResponseList, handleValidationError } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -34,10 +34,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const payload = await request.json();
 	const parseResult = ScenarioSchema.safeParse(payload);
 	if (!parseResult.success) {
-		return json(
-			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
-			{ status: 400 }
-		);
+		return json(handleValidationError(parseResult.error), { status: 400 });
 	}
 	try {
 		const scenario = await prisma.scenario.create({
@@ -49,16 +46,6 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		});
 		return json(scenario);
 	} catch (error: unknown) {
-		// if (error instanceof Prisma.PrismaClientKnownRequestError) {
-		// 	if (error.code === QueryError.UniqueConstraintViolation) {
-		// 		return json(
-		// 			{
-		// 				message: 'The provided email is already in use.'
-		// 			},
-		// 			{ status: 401 }
-		// 		);
-		// 	}
-		// }
 		console.error(error);
 		return json({ message: 'Server Error' }, { status: 500 });
 	}

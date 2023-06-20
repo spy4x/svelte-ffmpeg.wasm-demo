@@ -62,12 +62,8 @@
 			"pnpm vitest run --silent --",
 			"pnpm check",
 			"pnpm eslint --fix",
-			"pnpm build --",
-			"git add"
+			"pnpm build --"
 		],
-		"schema.prisma": [
-			"pnpm prisma format",
-			"git add"
-		]
+		"schema.prisma": "pnpm prisma format"
 	}
 }

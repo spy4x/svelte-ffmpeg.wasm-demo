@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { Loading } from '@components';
+	import { FormError, Loading } from '@components';
 	import {
 		AsyncOperationStatus,
 		AttachmentVMSchema,
@@ -18,6 +18,7 @@
 	let scenario: ScenarioVM;
 	let creatingMovieId = '';
 	let addSceneButton: HTMLButtonElement;
+	$: operation = $scenarios.operations[scenario?.id];
 
 	onMount(() => {
 		id = $page.params.id;
@@ -154,6 +155,7 @@
 							on:change={toggleAccess}
 						/>
 						<p>Is public?</p>
+						<FormError error={operation?.error} field="access" />
 					</label>
 					{#if scenario.access === 'SHARED'}
 						<p class="text-success-500">
@@ -194,6 +196,7 @@
 				<label>
 					<span>Title</span>
 					<input bind:value={scenario.title} class="input" type="text" placeholder="Enter title" />
+					<FormError error={operation?.error} field="title" />
 				</label>
 				<label>
 					<span>Description</span>
@@ -203,6 +206,7 @@
 						rows="4"
 						placeholder="Enter description"
 					/>
+					<FormError error={operation?.error} field="description" />
 				</label>
 
 				<!-- svelte-ignore a11y-label-has-associated-control -->
@@ -229,6 +233,9 @@
 							Upload Image
 						{/if}
 					</FileButton>
+					<FormError error={operation?.error} field="previewFile" />
+					<FormError error={operation?.error} field="previewURL" />
+					<FormError error={operation?.error} field="previewPath" />
 				</label>
 
 				<hr class="opacity-50" />
@@ -254,6 +261,7 @@
 						type="button"
 						class="btn variant-ghost-surface">Add actor</button
 					>
+					<FormError error={operation?.error} field="actors" />
 				</div>
 
 				<hr class="opacity-50" />
@@ -271,6 +279,7 @@
 						</FileButton>
 						<p class="opacity-50 text-xs pt-2 text-center">Up to 10 attachments (pdf, png, etc)</p>
 					</div>
+					<FormError error={operation?.error} field="attachments" />
 
 					{#if scenario.attachments.length}
 						<ol class="list flex flex-col gap-2" id="uploaded-list">
@@ -339,6 +348,7 @@
 			<div class="col-span-2 space-y-6">
 				<div class="card p-4 lg:p-8">
 					<div class="flex flex-col gap-5">
+						<FormError error={operation?.error} field="scenes" />
 						{#each scenario.scenes as scene, i}
 							<div
 								class="sm:grid gap-2 {i % 2 !== 0
@@ -461,10 +471,10 @@
 						type="button"
 						class="btn variant-filled-secondary"
 					>
-						<span class="text-white">Add scene</span>
+						<span class="text-white">Add scene (Total: {scenario.scenes.length})</span>
 					</button>
 
-					<span>Scenes: {scenario.scenes.length}</span>
+					<FormError message={operation?.error?.message} />
 
 					<button class="btn variant-filled-primary">
 						{#if $scenarios.operations[scenario.id]?.type === EntityOperationType.UPDATE && $scenarios.operations[scenario.id]?.status === AsyncOperationStatus.IN_PROGRESS}

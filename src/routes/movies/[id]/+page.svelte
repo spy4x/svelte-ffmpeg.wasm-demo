@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { CopyLink, Loading } from '@components';
+	import { CopyLink, FormError, Loading } from '@components';
 	import { createFFmpeg } from '@ffmpeg/ffmpeg';
 	import {
 		AsyncOperationStatus,
@@ -22,6 +22,7 @@
 	let scenario: null | ScenarioVM;
 	let _isAdvancedMode = false;
 
+	$: operation = $movies.operations[movie?.id];
 	$: showMoreUI = (movie && !movie.scenarioId) || _isAdvancedMode;
 	$: totalDuration = movie?.clips.reduce((acc, c) => acc + c.durationSec, 0) ?? 0;
 	$: percentageProcessed = totalDuration
@@ -213,6 +214,7 @@
 				<label>
 					<span>Title</span>
 					<input bind:value={movie.title} class="input" type="text" placeholder="Enter title" />
+					<FormError error={operation?.error} field="title" />
 				</label>
 
 				<label>
@@ -223,12 +225,14 @@
 						rows="4"
 						placeholder="Enter description"
 					/>
+					<FormError error={operation?.error} field="description" />
 				</label>
 
 				<hr class="opacity-50" />
 
 				<div class="flex flex-col gap-5">
 					<h4 class="h4">Actors</h4>
+					<FormError error={operation?.error} field="actors" />
 					{#each movie.actors as actor, i}
 						<label>
 							<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
@@ -306,6 +310,9 @@
 								{/if}
 							</div>
 						</div>
+						<FormError error={operation?.error} field="videoURL" />
+						<FormError error={operation?.error} field="videoPath" />
+						<FormError error={operation?.error} field="videoFile" />
 					{/if}
 
 					{#if finalVideoStatus === VideoStatus.IDLE}
@@ -335,6 +342,7 @@
 				<div class="card p-4 lg:p-8">
 					<div class="space-y-5">
 						<h4 class="h4">Clips:</h4>
+						<FormError error={operation?.error} field="clips" />
 
 						{#each movie.clips as clip, index}
 							<div
@@ -482,14 +490,22 @@
 			<div class="fixed bottom-6 inset-x-4">
 				<div class="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
 					<div class="lg:col-start-2 lg:col-span-2">
-						<div class="flex items-center p-4 lg:p-8 variant-glass-surface rounded-3xl">
+						<div
+							class="flex justify-between items-center p-4 lg:p-8 variant-glass-surface rounded-3xl"
+						>
 							{#if showMoreUI}
 								<button on:click={addClip} type="button" class="btn variant-ghost-surface">
 									Add clip
 								</button>
 							{/if}
 
-							<button class="ml-auto btn variant-filled-primary">
+							<FormError message={operation?.error?.message} />
+
+							<button
+								class="btn variant-filled-primary {!showMoreUI &&
+									!operation?.error?.message &&
+									'ml-auto'}"
+							>
 								{#if $movies.operations[movie.id]?.type === EntityOperationType.UPDATE && $movies.operations[movie.id]?.status === AsyncOperationStatus.IN_PROGRESS}
 									<Loading isIcon={true} />
 								{:else}

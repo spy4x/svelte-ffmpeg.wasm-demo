@@ -1,17 +1,32 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Loading } from '@components';
-	import { AsyncOperationStatus, EntityOperationType } from '@shared';
+	import { FormError, Loading } from '@components';
+	import {
+		AsyncOperationStatus,
+		ClipVMSchema,
+		EntityOperationType,
+		MovieVMSchema,
+		type MovieVM
+	} from '@shared';
 	import { AppBar } from '@skeletonlabs/skeleton';
-	import { movies, scenarios } from '@stores';
+	import { auth, movies, scenarios } from '@stores';
 	import { generateRandomString } from 'lucia-auth';
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
 
 	const id = generateRandomString(15);
-	let title = '';
-	let scenarioId: null | string = null;
+	let movie: MovieVM;
+	$: operation = $movies.operations[movie?.id];
 
 	onMount(() => {
+		const user = get(auth).user;
+		if (!user) {
+			return;
+		}
+		movie = MovieVMSchema.parse({
+			userId: user.id,
+			clips: [ClipVMSchema.parse({})]
+		} satisfies Partial<MovieVM>);
 		const unsubscribe = movies.subscribe(($movies) => {
 			const op = $movies.operations[id];
 			if (
@@ -46,18 +61,19 @@
 	</AppBar>
 	<form
 		data-e2e="new-movie-form"
-		on:submit|preventDefault={() => movies.createFromScenario(id, scenarioId, title)}
+		on:submit|preventDefault={() => movies.createFromScenario(id, movie.scenarioId, movie.title)}
 	>
 		<div class="card">
 			<section class="p-4">
 				<div class="flex flex-col gap-5">
 					<label>
 						<span>Title</span>
-						<input bind:value={title} class="input" type="text" placeholder="Enter title" />
+						<input bind:value={movie.title} class="input" type="text" placeholder="Enter title" />
+						<FormError error={operation?.error} field="title" />
 					</label>
 					<label>
 						<span>Scenario</span>
-						<select bind:value={scenarioId} class="select" placeholder="Select movie">
+						<select bind:value={movie.scenarioId} class="select" placeholder="Select movie">
 							<option value={null}>---Blank---</option>
 							{#each $scenarios.my.data as scenario}
 								<option value={scenario.id}>{scenario.title}</option>

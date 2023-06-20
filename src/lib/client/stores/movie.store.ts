@@ -12,7 +12,13 @@ import {
 	type MovieDelete,
 	type MovieVM,
 	type ResponseList,
-	MovieCommandSchema
+	MovieCommandSchema,
+	type ValidationError,
+	type AsyncOperation,
+	type RequestError,
+	handleValidationError,
+	handleRequestError,
+	UPLOAD_ERROR
 } from '@shared';
 import { toastStore } from '@skeletonlabs/skeleton';
 import { derived, get, writable, type Writable } from 'svelte/store';
@@ -20,12 +26,10 @@ import { auth } from './auth.store';
 import { request, type RequestHelperError } from './helpers';
 import { scenarios } from './scenario.store';
 
-export interface MovieOperation {
-	type: EntityOperationType;
-	payload: MovieVM | MovieDelete;
-	status: AsyncOperationStatus;
-	error: null | RequestHelperError;
-}
+export type MovieOperation = AsyncOperation<
+	MovieVM | MovieDelete,
+	ValidationError<typeof MovieCommandSchema> | RequestError
+>;
 
 interface DataState {
 	list: {
@@ -129,11 +133,25 @@ export const movies = {
 			error: null
 		});
 
-		const [error, createdMovie] = await request<Movie>('/api/movies', 'POST', movie);
+		const parseResult = MovieCommandSchema.safeParse(movie);
+		if (!parseResult.success) {
+			mutateOperation(movie.id, {
+				status: AsyncOperationStatus.ERROR,
+				error: handleValidationError(parseResult.error)
+			});
+			toastStore.trigger({
+				message: 'Check fields correctness',
+				background: 'variant-filled-warning'
+			});
+			return;
+		}
+		const payload = parseResult.data;
+
+		const [error, createdMovie] = await request<Movie>('/api/movies', 'POST', payload);
 		// update operation status
 		mutateOperation(movie.id, {
 			status: createdMovie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
-			error
+			error: error ? handleRequestError(error) : null
 		});
 		if (createdMovie) {
 			mutateList({
@@ -215,7 +233,20 @@ export const movies = {
 			error: null
 		});
 
-		// TODO: pick only changed fields (vidoe, clips)
+		let parseResult = MovieCommandSchema.safeParse(movie);
+		if (!parseResult.success) {
+			mutateOperation(movie.id, {
+				status: AsyncOperationStatus.ERROR,
+				error: handleValidationError(parseResult.error)
+			});
+			toastStore.trigger({
+				message: 'Check fields correctness',
+				background: 'variant-filled-warning'
+			});
+			return;
+		}
+
+		// Detect files to be uploaded (vidoe, clips)
 		const wasVideoChanged = !!movie.videoFile;
 		const clipsChangedIds = movie.clips.filter((c) => c.file).map((a) => a.id);
 
@@ -230,7 +261,7 @@ export const movies = {
 			if (error) {
 				mutateOperation(movie.id, {
 					status: AsyncOperationStatus.ERROR,
-					error
+					error: error ? handleRequestError(error) : null
 				});
 				return;
 			}
@@ -259,9 +290,14 @@ export const movies = {
 				mutateOperation(movie.id, {
 					status: AsyncOperationStatus.ERROR,
 					error: {
-						status: 500,
-						body: uploadErrors[0].error ? uploadErrors[0].error : { message: 'Upload error' }
+						code: UPLOAD_ERROR,
+						message: 'File upload failed',
+						body: uploadErrors[0].error ? uploadErrors[0].error : { errors: uploadErrors }
 					}
+				});
+				toastStore.trigger({
+					message: 'Files upload failed',
+					background: 'variant-filled-warning'
 				});
 				return;
 			}
@@ -280,14 +316,26 @@ export const movies = {
 			}
 		}
 
-		const payload = MovieCommandSchema.parse(movie);
+		parseResult = MovieCommandSchema.safeParse(movie);
+		if (!parseResult.success) {
+			mutateOperation(movie.id, {
+				status: AsyncOperationStatus.ERROR,
+				error: handleValidationError(parseResult.error)
+			});
+			toastStore.trigger({
+				message: 'Check fields correctness',
+				background: 'variant-filled-warning'
+			});
+			return;
+		}
+		const payload = parseResult.data;
 
 		const [error, updatedMovie] = await request<Movie>(`/api/movies/${movie.id}`, 'PATCH', payload);
 
 		// update operation status
 		mutateOperation(movie.id, {
 			status: updatedMovie ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
-			error
+			error: error ? handleRequestError(error) : null
 		});
 
 		if (updatedMovie) {
@@ -341,7 +389,7 @@ export const movies = {
 					// update operation status
 					mutateOperation(id, {
 						status: error ? AsyncOperationStatus.ERROR : AsyncOperationStatus.SUCCESS,
-						error
+						error: error ? handleRequestError(error) : null
 					});
 					if (error) {
 						toastStore.trigger({

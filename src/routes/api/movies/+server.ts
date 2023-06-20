@@ -1,6 +1,6 @@
 import type { Movie, Prisma } from '@prisma/client';
 import { prisma } from '@server';
-import { MovieSchema, type ResponseList } from '@shared';
+import { MovieSchema, handleValidationError, type ResponseList } from '@shared';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -34,10 +34,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const payload = await request.json();
 	const parseResult = MovieSchema.safeParse(payload);
 	if (!parseResult.success) {
-		return json(
-			{ ...parseResult.error.format(), message: 'Please check correctness of fields' },
-			{ status: 400 }
-		);
+		return json(handleValidationError(parseResult.error), { status: 400 });
 	}
 	const payloadData = parseResult.data;
 	try {

@@ -7,7 +7,13 @@ import {
 	EntityOperationType,
 	type ScenarioVM,
 	ScenarioVMSchema,
-	ScenarioCommandSchema
+	ScenarioCommandSchema,
+	handleValidationError,
+	type AsyncOperation,
+	type ValidationError,
+	handleRequestError,
+	type RequestError,
+	UPLOAD_ERROR
 } from '@shared';
 import { browser } from '$app/environment';
 import type { Scenario } from '@prisma/client';
@@ -16,12 +22,10 @@ import { auth } from './auth.store';
 import { toastStore } from '@skeletonlabs/skeleton';
 import { uploadFile } from '@client/services';
 
-export interface ScenarioOperation {
-	type: EntityOperationType;
-	payload: ScenarioVM | ScenarioDelete;
-	status: AsyncOperationStatus;
-	error: null | RequestHelperError;
-}
+export type ScenarioOperation = AsyncOperation<
+	ScenarioVM | ScenarioDelete,
+	ValidationError<typeof ScenarioCommandSchema> | RequestError
+>;
 
 interface ListDataState {
 	ids: string[];
@@ -188,10 +192,13 @@ export const scenarios = {
 
 		const parseResult = ScenarioCommandSchema.safeParse(scenario);
 		if (!parseResult.success) {
-			console.error(parseResult.error);
 			mutateOperation(scenario.id, {
 				status: AsyncOperationStatus.ERROR,
-				error: { status: 501, body: parseResult.error }
+				error: handleValidationError(parseResult.error)
+			});
+			toastStore.trigger({
+				message: 'Check fields correctness',
+				background: 'variant-filled-warning'
 			});
 			return;
 		}
@@ -201,7 +208,7 @@ export const scenarios = {
 		// update operation status
 		mutateOperation(scenario.id, {
 			status: scenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
-			error
+			error: error ? handleRequestError(error) : null
 		});
 		if (createdScenario) {
 			mutateMy({
@@ -241,6 +248,19 @@ export const scenarios = {
 			error: null
 		});
 
+		let parseResult = ScenarioCommandSchema.safeParse(scenario);
+		if (!parseResult.success) {
+			mutateOperation(scenario.id, {
+				status: AsyncOperationStatus.ERROR,
+				error: handleValidationError(parseResult.error)
+			});
+			toastStore.trigger({
+				message: 'Check fields correctness',
+				background: 'variant-filled-warning'
+			});
+			return;
+		}
+
 		// Detect files to be uploaded (preview, attachments)
 		const wasPreviewChanged = !!scenario.previewFile;
 		const changedAttachments = scenario.attachments.filter((a) => a.file);
@@ -259,7 +279,7 @@ export const scenarios = {
 			if (error) {
 				mutateOperation(scenario.id, {
 					status: AsyncOperationStatus.ERROR,
-					error
+					error: error ? handleRequestError(error) : null
 				});
 				return;
 			}
@@ -290,9 +310,14 @@ export const scenarios = {
 				mutateOperation(scenario.id, {
 					status: AsyncOperationStatus.ERROR,
 					error: {
-						status: 500,
-						body: uploadErrors[0].error ? uploadErrors[0].error : { message: 'Upload error' }
+						code: UPLOAD_ERROR,
+						message: 'File upload failed',
+						body: uploadErrors[0].error ? uploadErrors[0].error : { errors: uploadErrors }
 					}
+				});
+				toastStore.trigger({
+					message: 'Files upload failed',
+					background: 'variant-filled-warning'
 				});
 				return;
 			}
@@ -311,12 +336,15 @@ export const scenarios = {
 			}
 		}
 
-		const parseResult = ScenarioCommandSchema.safeParse(scenario);
+		parseResult = ScenarioCommandSchema.safeParse(scenario);
 		if (!parseResult.success) {
-			console.error(parseResult.error);
 			mutateOperation(scenario.id, {
 				status: AsyncOperationStatus.ERROR,
-				error: { status: 501, body: parseResult.error }
+				error: handleValidationError(parseResult.error)
+			});
+			toastStore.trigger({
+				message: 'Check fields correctness',
+				background: 'variant-filled-warning'
 			});
 			return;
 		}
@@ -330,7 +358,7 @@ export const scenarios = {
 		// update operation status
 		mutateOperation(scenario.id, {
 			status: updatedScenario ? AsyncOperationStatus.SUCCESS : AsyncOperationStatus.ERROR,
-			error
+			error: error ? handleRequestError(error) : null
 		});
 		if (updatedScenario) {
 			mutateMy({
@@ -383,7 +411,7 @@ export const scenarios = {
 					// update operation status
 					mutateOperation(id, {
 						status: error ? AsyncOperationStatus.ERROR : AsyncOperationStatus.SUCCESS,
-						error
+						error: error ? handleRequestError(error) : null
 					});
 					if (error) {
 						toastStore.trigger({
