@@ -1,18 +1,37 @@
-import { ONE_YEAR_AS_SECONDS } from '@shared';
-import { supabase } from './supabase';
+export type UploadFileResult =
+  | { error: Error; data: null }
+  | {
+      error: null;
+      data: null;
+    };
 
-export type UploadFileResult = {
-	error: null | Error;
-};
+/** Uploads a file to a signed URL */
+export async function uploadFile(signedUploadUrl: string, file: File): Promise<UploadFileResult> {
+  const response = await fetch(signedUploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': file.type,
+      'Content-Disposition': `attachment; filename="${file.name}"`,
+    },
+  });
+  if (!response.ok) {
+    return {
+      error: new Error(`Error uploading file to ${signedUploadUrl}`),
+      data: null,
+    };
+  }
 
-export async function uploadFile(
-	path: string,
-	token: string,
-	file: File | Blob
-): Promise<UploadFileResult> {
-	const { error } = await supabase.storage.from('media').uploadToSignedUrl(path, token, file, {
-		upsert: true,
-		cacheControl: `${ONE_YEAR_AS_SECONDS}`
-	});
-	return { error };
+  console.log({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    url: signedUploadUrl,
+    response: await response.text(),
+  });
+
+  return {
+    error: null,
+    data: null,
+  };
 }
