@@ -5,7 +5,7 @@ import { MERGE_API_URL } from '$env/static/private';
 import { getRandomString, MovieSchema } from '@shared';
 
 /**
- * API Endpoint handler for  "GET /api/movies/:id/uploads { clips: ['id3', 'id5'] }"
+ * API Endpoint handler for  "GET /api/movies/:id/uploads { clips: ['id3', 'id5'], extension: 'mp4' | 'webm' }"
  * Checks if user is the owner of the movie and returns signed URLs for uploading files
  * returns JSON { clips: {id: string, path: string, url: string }[] }
  */
@@ -27,12 +27,14 @@ export const GET: RequestHandler = async ({ locals, url, params }) => {
       ?.split(',')
       .filter(id => !!id) || [];
 
+  const extension = url.searchParams.get('extension') || 'webm';
+
   // get clips from movie as map
   const clips = MovieSchema.parse(movie).clips;
 
-  const getClipById = (id: string) => clips.find(clip => clip.id === id)!;
+  const getClipById = (id: string) => clips.find(clip => clip.id === id);
   const getFileExtensionByClipId = (id: string) =>
-    getClipById(id).mimeType?.split('/')[1] || 'webm';
+    getClipById(id)?.mimeType?.split('/')[1] || extension;
 
   const files = clipIds.map(id => ({
     id,
