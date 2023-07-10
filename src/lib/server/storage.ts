@@ -12,21 +12,22 @@ export type GetSignedUrlForFileUploadResult =
 export async function getSignedUrlForFileUpload(
   path: string,
 ): Promise<GetSignedUrlForFileUploadResult> {
-  // const method = 'POST';
-  // const requestURL = `${MERGE_API_URL}/uploads`;
-  // console.log(`${method} ${requestURL}\n${JSON.stringify(files, null, 4)}`);
-  // const response = await fetch(requestURL, {
-  //   method,
-  //   body: JSON.stringify(files),
-  // });
-  // if (!response.ok) {
-  //   console.error(`Status: `, response.status);
-  //   return json({ message: 'Error getting signed URLs' }, { status: 500 });
-  // }
-  // const result: { id: string; path: string; url: string }[] = await response.json();
+  const method = 'POST';
+  const requestURL = `${MERGE_API_URL}/uploads`;
+  const payload = [{ id: 'fake', path }];
+  console.log(`${method} ${requestURL}\n${JSON.stringify(payload, null, 4)}`);
+  const response = await fetch(requestURL, {
+    method,
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    console.error(response.status, await response.text());
+    return { data: null, error: new Error('Error getting signed URL') };
+  }
+  const result: { id: string; path: string; url: string }[] = await response.json();
   return {
-    data: null,
-    error: new Error('Not implemented'),
+    error: null,
+    data: result[0],
   };
 }
 

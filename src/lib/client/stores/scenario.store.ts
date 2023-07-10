@@ -269,8 +269,8 @@ export const scenarios = {
     if (wasPreviewChanged || attachmentsChangedIds.length) {
       // request upload signed URLs
       const [error, result] = await request<{
-        preview: { path: string; token: string };
-        attachments: { id: string; path: string; token: string }[];
+        preview: { path: string; url: string };
+        attachments: { id: string; path: string; url: string }[];
       }>(`/api/scenarios/${scenario.id}/uploads`, 'GET', {
         preview: wasPreviewChanged,
         attachments: attachmentsChangedIds,
@@ -288,13 +288,13 @@ export const scenarios = {
 
       const uploadPromises = [];
       if (wasPreviewChanged && result.preview && scenario.previewFile) {
-        uploadPromises.push(uploadFile(result.preview.token, scenario.previewFile));
+        uploadPromises.push(uploadFile(result.preview.url, scenario.previewFile));
       }
       if (result.attachments.length) {
         result.attachments.forEach(a => {
           const attachment = scenario.attachments.find(attachment => attachment.id === a.id);
           if (attachment?.file) {
-            uploadPromises.push(uploadFile(a.token, attachment.file));
+            uploadPromises.push(uploadFile(a.url, attachment.file));
           }
         });
       }
