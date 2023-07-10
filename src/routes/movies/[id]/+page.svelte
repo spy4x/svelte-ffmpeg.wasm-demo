@@ -20,6 +20,8 @@
   let movie: MovieVM;
   let scenario: null | ScenarioVM;
   let _isAdvancedMode = false;
+  let attempts = 0;
+  let mergeStatus: 'idle' | 'processing' | 'success' | 'error' = 'idle';
 
   $: operation = $movies.operations[movie?.id];
   $: showMoreUI = (movie && !movie.scenarioId) || _isAdvancedMode;
@@ -74,16 +76,41 @@
   let finalVideoStatus: VideoStatus = VideoStatus.IDLE;
 
   async function merge() {
+    mergeStatus = 'processing';
     // request PATCH /api/movies/:id/merge
     const response = await fetch(`/api/movies/${id}/merge`, {
       method: 'PATCH',
     });
     if (response.ok) {
-      const data = await response.json();
-      movie = data;
+      console.log('response', await response.json());
+      // attempts = 0;
+      // const interval = setInterval(async () => {
+      // 	attempts++;
+      // 	if (attempts > 100) {
+      // 		console.log('Giving up');
+      // 		status = 'error';
+      // 		clearInterval(interval);
+      // 		return;
+      // 	}
+      // 	// GET /api/get-url/{data.id} until it returns {url: string}
+      // 	const response = await fetch(`/api/get-url/${data.id}`);
+      // 	if (!response.ok) {
+      // 		console.log('Failed to get url', await response.json());
+      // 		return;
+      // 	}
+      // 	const { url } = await response.json();
+      // 	if (!url) {
+      // 		console.log('No url yet');
+      // 		return;
+      // 	}
+      // 	movieURL = url;
+      // 	status = 'success';
+      // 	clearInterval(interval);
+      // }, 5000);
     } else {
       const data = await response.json();
       console.error(data);
+      mergeStatus = 'error';
     }
   }
 
@@ -332,7 +359,11 @@
             <hr class="opacity-50" />
             {#if movie.clips.length >= 2 && movie.clips.every(c => !!c.url || c.status === VideoStatus.FINISHED)}
               <button type="button" class="btn variant-filled-primary" on:click={merge}>
-                {#if videoURL}
+                {#if mergeStatus === 'processing'}
+                  Processing... Try refresh page in 10 seconds or later
+                {:else if mergeStatus === 'error'}
+                  Processing failed. Try again.
+                {:else if videoURL}
                   Re-merge movie
                 {:else}
                   Merge clips into movie
