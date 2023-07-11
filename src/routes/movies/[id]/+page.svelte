@@ -16,6 +16,9 @@
   import { movies, scenarios } from '@stores';
   import { onMount } from 'svelte';
   import VideoControl from './video-control.svelte';
+  import VideoRecorder from './video-recorder.svelte';
+  import { modalStore } from '@skeletonlabs/skeleton';
+  import type { ModalSettings, ModalComponent } from '@skeletonlabs/skeleton';
 
   let id: string;
   let movie: MovieVM;
@@ -148,6 +151,23 @@
         mimeType: null,
       },
     ];
+  }
+
+  // Modal ---
+
+  function modalDemo(): void {
+    const c: ModalComponent = {
+      ref: VideoRecorder,
+      props: { background: 'bg-red-500' },
+    };
+    const modal: ModalSettings = {
+      type: 'component',
+      component: c,
+      title: 'Custom Form Component',
+      body: 'Complete the form below and then press submit.',
+      response: (r: any) => console.log('response:', r),
+    };
+    modalStore.trigger(modal);
   }
 </script>
 
@@ -339,6 +359,11 @@
       </div>
 
       <div class="col-span-2">
+        <div class="py-4">
+          <button class="btn variant-filled" on:click|stopPropagation|preventDefault={modalDemo}
+            >Show Modal</button
+          >
+        </div>
         <div class="card p-4 lg:p-8">
           <div class="space-y-5">
             <h4 class="h4">Clips:</h4>
