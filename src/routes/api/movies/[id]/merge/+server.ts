@@ -3,6 +3,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { MERGE_API_URL } from '$env/static/private';
 import { getRandomString, MovieSchema } from '@shared';
+import { VideoMergeStatus } from '@prisma/client';
 
 /**
  * API Endpoint handler for  "GET /api/movies/:id/uploads { clips: ['id3', 'id5'] }"
@@ -41,5 +42,13 @@ export const PATCH: RequestHandler = async ({ locals, url, params }) => {
   }
   const result: { message: string }[] = await response.json();
   console.log({ result });
-  return json(result);
+  const updatedMovie = await prisma.movie.update({
+    where: { id: movieId },
+    data: {
+      videoMergeStatus: VideoMergeStatus.PROCESSING,
+      videoMergeStartedAt: new Date(),
+      videoMergeTookSeconds: 0,
+    },
+  });
+  return json(updatedMovie);
 };

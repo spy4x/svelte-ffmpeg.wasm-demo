@@ -10,6 +10,7 @@
     type ClipVM,
     type MovieVM,
     type ScenarioVM,
+    VideoMergeStatus,
   } from '@shared';
   import { AppBar, Avatar, toastStore } from '@skeletonlabs/skeleton';
   import { movies, scenarios } from '@stores';
@@ -21,7 +22,8 @@
   let scenario: null | ScenarioVM;
   let _isAdvancedMode = false;
   let attempts = 0;
-  let mergeStatus: 'idle' | 'processing' | 'success' | 'error' = 'idle';
+  let isTriggerMergeRequestInProgress = false;
+  let processingInSeconds = 0;
 
   $: operation = $movies.operations[movie?.id];
   $: showMoreUI = (movie && !movie.scenarioId) || _isAdvancedMode;
@@ -29,7 +31,7 @@
   $: percentageProcessed = totalDuration
     ? (((movie?.durationSec ?? 0) / totalDuration) * 100).toFixed(0)
     : 0;
-  $: videoURL = finalVideo?.url ?? movie?.videoURL ?? '';
+  $: videoURL = movie?.videoURL ?? '';
 
   onMount(() => {
     id = $page.params.id;
@@ -60,7 +62,7 @@
             durationSec: mc.durationSec ?? 0,
           };
         });
-        movie = { ...clone, clips, videoPath: null };
+        movie = { ...clone, clips, videoPath: null } as any;
 
         if (movie.scenarioId) {
           scenario = $scenarios.getById(movie.scenarioId);
@@ -72,100 +74,60 @@
     return unsubscribe;
   });
 
-  let finalVideo: null | ClipVM = null;
-  let finalVideoStatus: VideoStatus = VideoStatus.IDLE;
-
   async function merge() {
-    mergeStatus = 'processing';
+    isTriggerMergeRequestInProgress = true;
     // request PATCH /api/movies/:id/merge
     const response = await fetch(`/api/movies/${id}/merge`, {
       method: 'PATCH',
     });
+    isTriggerMergeRequestInProgress = false;
     if (response.ok) {
-      console.log('response', await response.json());
-      // attempts = 0;
-      // const interval = setInterval(async () => {
-      // 	attempts++;
-      // 	if (attempts > 100) {
-      // 		console.log('Giving up');
-      // 		status = 'error';
-      // 		clearInterval(interval);
-      // 		return;
-      // 	}
-      // 	// GET /api/get-url/{data.id} until it returns {url: string}
-      // 	const response = await fetch(`/api/get-url/${data.id}`);
-      // 	if (!response.ok) {
-      // 		console.log('Failed to get url', await response.json());
-      // 		return;
-      // 	}
-      // 	const { url } = await response.json();
-      // 	if (!url) {
-      // 		console.log('No url yet');
-      // 		return;
-      // 	}
-      // 	movieURL = url;
-      // 	status = 'success';
-      // 	clearInterval(interval);
-      // }, 5000);
+      const updatedMovie = await response.json();
+      console.log('response', updatedMovie);
+      movie = updatedMovie;
+
+      const processingInSecondsInterval = setInterval(() => {
+        processingInSeconds++;
+      }, 1000);
+
+      attempts = 0;
+      const movieReloadInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > 100) {
+          console.log('Giving up');
+          clearInterval(movieReloadInterval);
+          clearInterval(processingInSecondsInterval);
+          return;
+        }
+        const response = await fetch(`/api/movies/${movie.id}`);
+        if (!response.ok) {
+          console.log('Failed to get updated movie', await response.json());
+          return;
+        }
+        movie = await response.json();
+        if (
+          movie.videoMergeStatus === VideoMergeStatus.DONE ||
+          movie.videoMergeStatus === VideoMergeStatus.FAILED
+        ) {
+          toastStore.trigger({
+            message:
+              movie.videoMergeStatus === VideoMergeStatus.DONE
+                ? 'Video merged'
+                : 'Failed to merge video',
+            background:
+              movie.videoMergeStatus === VideoMergeStatus.DONE
+                ? 'variant-filled-success'
+                : 'variant-filled-error',
+          });
+          clearInterval(movieReloadInterval);
+          clearInterval(processingInSecondsInterval);
+        }
+      }, 5000);
     } else {
       const data = await response.json();
       console.error(data);
-      mergeStatus = 'error';
     }
   }
-
-  // async function merge() {
-  // 	finalVideoStatus = VideoStatus.PROCESSING;
-  // 	movie.durationSec = 0;
-  // 	const ffmpeg = createFFmpeg({ log: true });
-  // 	await ffmpeg.load();
-  // 	ffmpeg.setProgress((eventWithWrongTypes) => {
-  // 		const event = eventWithWrongTypes as unknown as { ratio: number; time: number };
-  // 		const time: number = event.time;
-  // 		if (time) {
-  // 			movie.durationSec = time;
-  // 		} else if (event.ratio === 1) {
-  // 			finalVideoStatus = VideoStatus.FINISHED;
-  // 		}
-  // 		console.log('Progress', { ratio: event.ratio, event });
-  // 	});
-  // 	ffmpeg.setLogger(({ message }) => {
-  // 		console.log(message);
-  // 	});
-
-  // 	const filesTxtPath = 'files.txt';
-  // 	let filesTxtContent = '';
-
-  // 	for (let i = 0; i < movie.clips.length; i++) {
-  // 		const clips = movie.clips as unknown as MovieVM['clips'];
-  // 		const clip = clips[i];
-  // 		if (!clip.file || !clip.mimeType) {
-  // 			throw new Error('Clip file not found');
-  // 		}
-  // 		const path = `${i}.${clip.mimeType.split('/')[1]}`;
-  // 		const data = new Uint8Array(await clip.file.arrayBuffer());
-  // 		ffmpeg.FS('writeFile', path, data);
-  // 		filesTxtContent += `file '${path}'\n`;
-  // 	}
-  // 	const outputFilePath = `output.mp4`;
-  // 	ffmpeg.FS('writeFile', filesTxtPath, filesTxtContent);
-  // 	await ffmpeg.run('-f', 'concat', '-i', filesTxtPath, outputFilePath);
-  // 	const data = ffmpeg.FS('readFile', outputFilePath);
-  // 	const blob = new Blob([data.buffer], { type: 'video/mp4' });
-  // 	finalVideo = {
-  // 		id: 'final',
-  // 		actor: null,
-  // 		description: '',
-  // 		mimeType: 'video/mp4',
-  // 		file: blob,
-  // 		path: null,
-  // 		url: URL.createObjectURL(blob),
-  // 		status: VideoStatus.FINISHED,
-  // 		durationSec: movie?.durationSec
-  // 	};
-  // 	movie.videoFile = blob;
-  // 	finalVideoStatus = VideoStatus.FINISHED;
-  // }
 
   function deleteClip(index: number): void {
     movie.clips = movie.clips.filter((_, i) => i !== index);
@@ -310,13 +272,13 @@
           {#if videoURL}
             <hr class="opacity-50" />
             <div data-e2e="Final video" class="flex flex-col gap-5">
-              <h4 class="h4">Completed video</h4>
-              <video
-                controls
-                src={videoURL}
-                autoplay={finalVideoStatus === VideoStatus.FINISHED}
-                class="rounded-lg"
-              >
+              <h4 class="h4">
+                Completed video
+                {#if movie.videoMergeTookSeconds}
+                  (processed in {movie.videoMergeTookSeconds} seconds)
+                {/if}
+              </h4>
+              <video controls src={videoURL} autoplay={false} class="rounded-lg">
                 <track kind="captions" />
               </video>
               <div class="flex gap-3">
@@ -355,29 +317,23 @@
             <FormError error={operation?.error} field="videoFile" />
           {/if}
 
-          {#if finalVideoStatus === VideoStatus.IDLE}
-            <hr class="opacity-50" />
-            {#if movie.clips.length >= 2 && movie.clips.every(c => !!c.url || c.status === VideoStatus.FINISHED)}
-              <button type="button" class="btn variant-filled-primary" on:click={merge}>
-                {#if mergeStatus === 'processing'}
-                  Processing... Try refresh page in 10 seconds or later
-                {:else if mergeStatus === 'error'}
-                  Processing failed. Try again.
-                {:else if videoURL}
-                  Re-merge movie
-                {:else}
-                  Merge clips into movie
-                {/if}
-              </button>
-            {:else}
-              <p class="text-center text-surface-300">Add at least 2 videos to merge</p>
-            {/if}
-          {/if}
-          {#if finalVideoStatus === VideoStatus.PROCESSING}
-            <hr class="opacity-50" />
-            <button class="btn variant-filled-primary">
-              Processing {percentageProcessed}%
+          <hr class="opacity-50" />
+          {#if movie.clips.length >= 2 && movie.clips.every(c => !!c.url || c.status === VideoStatus.FINISHED)}
+            <button type="button" class="btn variant-filled-primary" on:click={merge}>
+              {#if isTriggerMergeRequestInProgress}
+                <Loading />
+              {:else if movie.videoMergeStatus === VideoMergeStatus.PROCESSING}
+                Processing ({processingInSeconds} sec)... Please wait. Maybe a cup of tea?
+              {:else if movie.videoMergeStatus === VideoMergeStatus.FAILED}
+                Processing failed. Try again.
+              {:else if videoURL}
+                Re-merge movie
+              {:else}
+                Merge clips into movie
+              {/if}
             </button>
+          {:else}
+            <p class="text-center text-surface-300">Add at least 2 videos to merge</p>
           {/if}
         </div>
       </div>

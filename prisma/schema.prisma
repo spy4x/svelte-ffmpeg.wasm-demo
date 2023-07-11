@@ -15,6 +15,13 @@ enum Role {
   ADMIN
 }
 
+enum VideoMergeStatus {
+  IDLE
+  PROCESSING
+  DONE
+  FAILED
+}
+
 model AuthUser {
   id           String        @id @unique @db.VarChar(15)
   auth_session AuthSession[]
@@ -85,18 +92,21 @@ model Scenario {
 }
 
 model Movie {
-  id          String   @id @unique @db.VarChar(15)
-  userId      String   @map("user_id") @db.VarChar(15)
-  scenarioId  String?  @map("scenario_id") @db.VarChar(15)
-  title       String   @default("Untitled") @db.VarChar(100)
-  description String   @default("") @db.VarChar(1000)
-  actors      String[] @db.VarChar(100)
-  clips       Json[]   @default([]) @db.JsonB
-  videoURL    String?  @map("video_url") @db.VarChar(400)
-  videoPath   String?  @map("video_path") @db.VarChar(400)
-  durationSec Int      @map("duration_sec") @db.Integer
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  id                    String           @id @unique @db.VarChar(15)
+  userId                String           @map("user_id") @db.VarChar(15)
+  scenarioId            String?          @map("scenario_id") @db.VarChar(15)
+  title                 String           @default("Untitled") @db.VarChar(100)
+  description           String           @default("") @db.VarChar(1000)
+  actors                String[]         @db.VarChar(100)
+  clips                 Json[]           @default([]) @db.JsonB
+  videoMergeStatus      VideoMergeStatus @default(IDLE) @map("video_merge_status")
+  videoMergeStartedAt   DateTime?        @map("video_merge_started_at")
+  videoMergeTookSeconds Int              @default(0) @map("video_merge_took_seconds")
+  videoURL              String?          @map("video_url") @db.VarChar(400)
+  videoPath             String?          @map("video_path") @db.VarChar(400)
+  durationSec           Int              @map("duration_sec") @db.Integer
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @default(now()) @updatedAt @map("updated_at")
 
   user AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 

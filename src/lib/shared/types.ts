@@ -132,6 +132,13 @@ export enum VideoStatus {
   FINISHED = 'FINISHED',
 }
 
+export enum VideoMergeStatus {
+  IDLE = 'IDLE',
+  PROCESSING = 'PROCESSING',
+  DONE = 'DONE',
+  FAILED = 'FAILED',
+}
+
 export const ClipSchema = z.object({
   id: z.string().default(() => getRandomString()),
   actor: z.number().nullable().default(null),
@@ -162,6 +169,9 @@ export const MovieSchema = z.object({
   actors: z.array(z.string().max(50)).default([]),
   clips: z.array(ClipSchema).default([]),
   videoURL: z.string().url().max(400).nullable().default(null),
+  videoMergeStatus: z.nativeEnum(VideoMergeStatus).default(VideoMergeStatus.IDLE),
+  videoMergeStartedAt: z.coerce.date().nullable().default(null),
+  videoMergeTookSeconds: z.number().nonnegative().default(0),
   videoPath: z.string().max(200).nullable().default(null),
   durationSec: z
     .number()
